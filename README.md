@@ -192,22 +192,23 @@ blocked main loop run in parallel.
 ### Measured speed by language
 
 Same machine as the benchmarks above (24 threads), computing 1,000 and
-10,000 digits after the decimal point; all outputs byte-identical:
+10,000 digits after the decimal point; all outputs byte-identical. Rows
+are sorted by the 10,000-digit time:
 
 | Implementation | Parallelism | 1,000 digits | 10,000 digits |
 |---|---|---:|---:|
 | C — `khinchin-fast` (this repo) | OpenMP | 0.007 s | 0.15 s |
 | PARI/GP — `ports/khinchin.gp` | parvector | 0.05 s | 2.8 s |
+| Python + gmpy2, two-region — `ports/khinchin_mt.py` | threads | 0.03 s | 5.0 s |
+| Python + gmpy2 — `ports/khinchin.py`, GMP backend | serial | 0.05 s | 9.0 s |
 | Rust — `ports/khinchin-rs` | rayon | 0.04 s | 9.8 s |
 | Fortran + MPFR — `ports/khinchin.f90` | OpenMP | 0.05 s | 12.3 s |
 | Julia — `ports/khinchin.jl` | threads | 0.22 s | 19.2 s |
-| Python — `ports/khinchin.py` | serial | 0.16 s | 64.5 s |
-| Python + gmpy2 — same file, GMP backend | serial | 0.05 s | 9.0 s |
-| Python + gmpy2, two-region — `ports/khinchin_mt.py` | threads | 0.03 s | 5.0 s |
 | Mathematica — `ports/khinchin.wl` | serial | 0.12 s | 21.7 s |
+| Python — `ports/khinchin.py`, pure-Python backend | serial | 0.16 s | 64.5 s |
 | Maple — `ports/khinchin.mpl` | serial | 8.5 s | 298 s |
-| mpmath built-in `mp.khinchin` | serial | 4.67 s | not run |
 | Mathematica built-in `Khinchin` | serial | 0.57 s | 508 s |
+| mpmath built-in `mp.khinchin` | serial | 4.67 s | not run |
 
 The C program leads by roughly 20-440x at 10k digits: it is the only
 implementation with per-term dropping precision, the two-region split,
