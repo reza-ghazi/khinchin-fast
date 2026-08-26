@@ -7,3 +7,6 @@ __pycache__/
 ports/khinchin-rs/target/
 *.mod
 .venv-ft/
+*.cmi
+*.cmx
+*.sage.py

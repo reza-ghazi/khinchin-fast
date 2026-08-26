@@ -272,19 +272,25 @@ quadrature.
   binary-splitting-friendly series is known (custom-formula finite-product
   demos are approximations, not full-precision computations).
 
-Beyond the Python and GP ports mentioned above, this repository's `ports/`
-directory carries the accelerated series of 4.3 in five more systems:
-Julia and Fortran (both binding FLINT/Arb directly, `arb_zeta_ui` per
-term, threaded), Rust (FLINT's reverse Bernoulli iterator plus the
-direct-tail region, mirroring the C program's structure), Maple, and
-Mathematica (accelerated series over symbolic `Zeta[2n]`, 12.7–23x
-faster than the built-in constant). Earlier versions of the
-Julia/Rust/Fortran ports used the classical positive-term recurrence
-`(n + 1/2) zeta(2n) = sum_{j=1}^{n-1} zeta(2j) zeta(2n-2j)` — numerically
-benign but `O(M^2)` full-precision products; binding FLINT bought
-15–27x. Every executable port takes `DIGITS [OUTPUT_FILE]`, and all
-locally testable ones write output files byte-identical to the C
-program's; `README.md` carries the measured cross-language speed table.
+Beyond the Python and GP ports mentioned above, this repository's
+`ports/` directory carries the accelerated series of 4.3 in thirteen
+more systems — with the C program, sixteen implementations across
+fifteen languages, every one verified byte-identical on this machine.
+Julia, Fortran, and Sage bind FLINT/Arb (`arb_zeta_ui` per term); Rust
+mirrors the C program's own structure (FLINT's reverse Bernoulli
+iterator plus the direct-tail region); Mathematica rides its symbolic
+`Zeta[2n]` (12.7–23x faster than the built-in constant); Maple runs on
+its `evalf` layer; and a native-bignum family — Go, Java, JavaScript,
+Ruby, Perl, Haskell, OCaml — computes in fixed-point integers with a
+port-local kit (Machin pi, atanh-series logarithms, halve-and-square
+exp), taking the even zeta values from the classical positive-term
+recurrence `(n + 1/2) zeta(2n) = sum_{j=1}^{n-1} zeta(2j) zeta(2n-2j)`
+— numerically benign but `O(M^2)` full-precision products, which is
+what orders that family by bignum backend. Earlier Julia/Rust/Fortran
+versions used the same recurrence; binding FLINT bought them 15–27x.
+Every executable port takes `DIGITS [OUTPUT_FILE]` and writes output
+byte-identical to the C program's; `README.md` carries the measured
+cross-language speed table.
 
 ## 6. Records
 

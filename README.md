@@ -252,10 +252,15 @@ machine. Rows are sorted by the 10,000-digit time:
 | Node.js — `ports/khinchin.mjs`, native BigInt | serial | 0.30 s | 306 s |
 | Mathematica built-in `Khinchin` | serial | 0.57 s | 508 s |
 | Perl — `ports/khinchin.pl`, Math::BigInt/FastCalc | serial | 84 s | not run |
-| mpmath built-in `mp.khinchin` | serial | 4.67 s | not run |
+| mpmath built-in `mp.khinchin` | serial | 4.67 s | 11,634 s |
 
 \* in-process, excluding interpreter startup (~0.2 s for Julia, ~3.5 s
-for Sage); the others are full wall-clock.
+for Sage); the others are full wall-clock. The mpmath built-in's
+11,634 s (3 h 14 min, measured once on the pure-Python backend) is
+78,000x the C program and 2,300x the accelerated Python port on the
+same backend family — the whole reason `ports/khinchin.py` exists. Its
+digit check flags only the final displayed digit, which it correctly
+rounds up where the reference file truncates.
 
 The ranking tracks the zeta strategy, not the language. The C program
 still leads — dropping per-term precision and a rigorously certified
