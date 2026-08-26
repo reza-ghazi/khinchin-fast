@@ -229,7 +229,7 @@ rather than assumed.
 
 **The formula.** Every known expression for `K0` was considered. The
 defining product converges far too slowly for even tens of digits. The
-dilogarithm and integral closed forms (`mathematical_background.md`,
+dilogarithm and integral closed forms (`MATHEMATICS.md`,
 section 4.5) converge only like `1/k^2` — verified numerically, and
 useless for digit computation. The plain BBC zeta series needs `~P/2`
 full-precision zeta terms; the accelerated form used here, with the small
