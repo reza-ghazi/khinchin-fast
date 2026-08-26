@@ -75,13 +75,33 @@ static long double estimated_peak_bytes(ulong digits, slong precision,
     long double number_bytes = (long double) precision / 8.0L + 64.0L;
     long double parallel_tables;
     long double decimal_conversion;
+    long double iterator_state;
+    double log2_N, n_direct, s, iterator_precision, zeta_terms, entry_bits;
 
     if (N < 2)
         N = 2;
+    log2_N = log2((double) N);
+    n_direct = ceil((double) precision / (2.0 * (log2_N + 3.0)));
+
+    /* Reverse Bernoulli iterator state, the dominant allocation beyond
+       about 200k digits: an iterator started at s = 2*n_direct stores
+       about 2^(p/s) scaled zeta powers whose per-entry precisions drop
+       from p = s*(log2(s) - 4.09) bits, and roughly half the threads
+       hold near-top iterators concurrently. Calibrated against measured
+       peak RSS at 100k-1M digits (estimate lands 1.2-1.6x above). */
+    s = 2.0 * n_direct;
+    iterator_precision = s * fmax(1.0, log2(s) - 4.09);
+    zeta_terms = fmax(1.0,
+        pow(2.0, iterator_precision / fmax(1.0, s - 1.0)));
+    entry_bits = fmax(64.0,
+        iterator_precision - s * (log2(zeta_terms) - 1.44));
+    iterator_state = fmaxl(1.0L, 0.5L * (long double) threads)
+        * (long double) zeta_terms * (long double) entry_bits / 8.0L;
+
     parallel_tables = 2.0L * threads * (N - 2) * number_bytes;
     decimal_conversion = (long double) digits
         + 3.0L * (long double) precision / 8.0L;
-    return 2.0L * (parallel_tables + decimal_conversion)
+    return 2.0L * (parallel_tables + decimal_conversion) + iterator_state
         + 64.0L * 1024.0L * 1024.0L;
 }
 

@@ -36,7 +36,8 @@ KHINCHIN_BACKEND=arb ./khinchin-fast 10000 khinchin-arb-10k.txt
 
 Timing statistics are printed to standard error. The result file contains only
 the decimal value and a final newline. A conservative memory preflight rejects
-jobs that are likely to exhaust physical RAM; `--force` overrides this check.
+jobs whose estimated peak exceeds 80% of physical RAM (see the memory section
+below for the model and its calibration); `--force` overrides this check.
 
 Tuning and diagnostic environment variables for the default backend:
 `KHINCHIN_N` overrides the power-table cut-off, `KHINCHIN_DIRECT` overrides
@@ -68,7 +69,38 @@ Khinchin's constant was 10^6 digits in about 12 days of single-core PARI
 Extrapolating to one billion digits still gives centuries: the exponent, not
 the constant factor, is the obstruction (see the next sections), and memory
 (16.1 GB peak at 1M, growing superlinearly) walls off the current in-memory
-design a little beyond 3 million digits on a 64 GB machine.
+design well before time does — see the next section.
+
+## Memory: the real limitation
+
+Beyond roughly 200k digits, peak memory is dominated not by the shared power
+tables (which grow about linearly with precision) but by the internal state of
+FLINT's reverse Bernoulli iterators. An iterator started at `s = 2*n_direct`
+stores about `2^(p/s)` scaled zeta powers whose per-entry precisions drop from
+`p ~ s*(log2 s - 4.09)` bits — roughly quadratic growth in the digit count —
+and about half the threads hold near-top iterators simultaneously, because the
+heaviest blocks are scheduled first. Measured peak RSS (`/usr/bin/time -v`)
+against the program's preflight estimate:
+
+| Digits after decimal | Preflight estimate | Measured peak RSS |
+|---:|---:|---:|
+| 10,000 | 80 MiB | 37 MiB |
+| 100,000 | 531 MiB | 337 MiB |
+| 200,000 | 1,439 MiB | 947 MiB |
+| 300,000 | 2,679 MiB | 1,957 MiB |
+| 1,000,000 | 18.7 GiB | ~15.4 GiB |
+
+The preflight models both allocations explicitly and is calibrated on the
+measurements above to stay 1.2-1.6x over the actual peak — deliberately
+conservative, since its job is to refuse jobs that would exhaust RAM. (An
+earlier version modelled only the power tables and under-estimated the
+million-digit run by more than 2x, which would have let a ~2.5M-digit job
+sail into an out-of-memory crash.) On this 64 GB machine the preflight starts
+refusing around 2 million digits, and the measured growth curve suggests such
+a job would genuinely need ~55 GB: memory, not time, is the first hard wall
+of the current all-in-memory design. Breaking past it would need out-of-core
+Bernoulli generation or slice-wise recomputation of the zeta tails — both of
+which give back part of the constant-factor speed this program exists to win.
 
 ## Comparison with PARI/GP
 
@@ -141,7 +173,10 @@ The SCP backend splits the zeta range at `n_direct ~ P/(2(log2 N + 3))`:
   dropping precisions.
 
 Work is divided into about four blocks per thread, sized by an analytic cost
-model, sorted heaviest first, and scheduled dynamically. Each worker traverses
+model, sorted heaviest first, and scheduled dynamically. Four blocks per
+thread is the measured optimum: two per thread performs the same within noise,
+while eight per thread is ~20% slower because every extra Bernoulli block pays
+its own iterator initialisation. Each worker traverses
 its block with a shared power table whose entries start at the precision their
 final, most demanding use requires. The final interval includes the proven
 truncation bounds, and decimal rounding succeeds only when Arb proves the

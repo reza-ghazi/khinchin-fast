@@ -106,9 +106,10 @@ measure-theoretic toolkit.
   called Khinchin's constant. His short book *Continued Fractions* (1935; 3rd
   ed. 1961) remains the classic reference.
 - **1951** — Ryll-Nardzewski recasts the proof via ergodic theory.
-- **1959–1960s** — first serious numerical evaluations (Shanks and Wrench, and
-  others), limited to modest precision because the defining product converges
-  extremely slowly.
+- **1959–1960s** — first serious numerical evaluations: Shanks and Wrench
+  ("Khintchine's constant", *Amer. Math. Monthly* 66, 1959), extended by
+  Wrench (*Math. Comp.* 14, 1960) — limited to modest precision because the
+  defining product converges extremely slowly.
 - **1997** — Bailey, Borwein and Crandall ("On the Khintchine constant",
   *Mathematics of Computation* 66) derive fast zeta-series accelerations and
   compute 7,350 digits.
@@ -238,7 +239,7 @@ Digit-computation records for `K0` (published, widely cited):
 | 1959–1960s | tens of digits | Shanks, Wrench and others, direct product/early series |
 | 1997 | 7,350 | Bailey, Borwein, Crandall — zeta-series acceleration |
 | 1998 | 110,000 | Gourdon — refined acceleration |
-| 2016 | 1,000,000 | University of Barcelona dynamical systems group — PARI, ~12 days, single core |
+| 2016 | 1,000,000 | Carles Simó (University of Barcelona) — PARI, ~12 days, single core; announced through OEIS A002210, where a cached copy of the digits is kept with permission |
 
 For perspective, this machine reproduces the 1998 record in about 15 seconds
 and the 2016 million-digit computation in 57 minutes (measured). But because every known
@@ -251,7 +252,47 @@ of infinitely many algebraically independent transcendentals
 (`zeta(2), zeta(4), ...`), each needed to full precision, and nobody has
 found a way around that. It is not even known whether `K0` is irrational.
 
-## 7. References
+## 7. The OEIS entries (A002210 and friends)
+
+The decimal expansion of `K0` is entry **A002210** in the On-Line Encyclopedia
+of Integer Sequences ("Decimal expansion of Khinchin's constant", keyword
+`nice`), entered by N. J. A. Sloane; it predates the online OEIS, having
+appeared in his 1973 *Handbook of Integer Sequences* and the 1995
+*Encyclopedia of Integer Sequences* (ids N0609 and M1564). The constant is
+named after the Soviet mathematician Aleksandr Yakovlevich Khinchin
+(1894–1959); the OEIS normalized the spelling "Khinchin" (over the older
+transliteration "Khintchine") in 2024.
+
+Facts recorded on the entry, cross-checked against this program:
+
+- The 104 digits in the entry's data field match `khinchin-1m.txt` digit for
+  digit (verified as part of this project's review).
+- **Digit provenance**: Harry J. Smith's b-file supplies 1,200 digits; Simon
+  Plouffe hosts 1,024-digit and 110,000-digit tables; and Carles Simó's 2016
+  computation of 10^6 digits (reported to the OEIS in October 2016) is cached
+  on the entry with permission — the record this program reproduces in under
+  an hour.
+- **Formulas**: the defining product `prod_{k>=1} (1 + 1/(k(k+2)))^(log2 k)`,
+  and `K0 = exp(A247038 / log 2)`, where **A247038** is the decimal expansion
+  of `Integral_{x=0..1} ln(floor(1/x)) / (1+x) dx = 0.6847247885631571...`.
+  That integral is precisely the unnormalized Birkhoff integral of section 2
+  (the Gauss measure carries an extra `1/ln 2`), i.e. `ln(2) * ln(K0)` — the
+  exact quantity this program's series computes before the final division by
+  `ln 2` and exponentiation.
+- **A002211** is the continued fraction expansion of `K0` itself:
+  `[2; 1, 2, 5, 1, 1, 2, 1, 1, 3, 10, ...]`. Its digit statistics feed the
+  self-referential numerical evidence of section 1 that `K0` obeys its own
+  theorem.
+- **Further references carried by the entry**: S. R. Finch, *Mathematical
+  Constants* (Cambridge, 2003), pp. 59–65; I. Vardi, *Computational
+  Recreations in Mathematica* (1991), p. 164; F. Le Lionnais, *Les Nombres
+  Remarquables* (1983), p. 46; Ph. Flajolet and I. Vardi, "Zeta function
+  expansions of some classical constants"; T. Wieting, "A Khinchin Sequence",
+  *Proc. Amer. Math. Soc.* 136 (2008); Khinchin's original Compositio
+  Mathematica papers (1935, 1936); and a 2013 Numberphile video ("Six
+  Sequences") featuring the constant.
+
+## 8. References
 
 - A. Ya. Khinchin, *Continued Fractions*, 3rd ed., University of Chicago
   Press, 1964 (original Russian 1935).
@@ -267,3 +308,10 @@ found a way around that. It is not even known whether `K0` is irrational.
   acceleration this project adapts (see `NOTICE.md`).
 - F. Johansson, FLINT/Arb documentation: `arb_const_khinchin`,
   `bernoulli_rev` — `https://flintlib.org`.
+- S. R. Finch, *Mathematical Constants*, Encyclopedia of Mathematics and its
+  Applications 94, Cambridge University Press, 2003, pp. 59–65.
+- D. Shanks, J. W. Wrench, Jr., "Khintchine's constant", *Amer. Math.
+  Monthly* 66 (1959), 276–279; J. W. Wrench, "Further evaluation of
+  Khintchine's constant", *Math. Comp.* 14 (1960), 370–371.
+- OEIS Foundation, entries A002210 (decimal expansion), A002211 (continued
+  fraction), A247038 (`ln 2 * ln K0`) — `https://oeis.org/A002210`.
