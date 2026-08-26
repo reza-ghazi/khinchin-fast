@@ -330,11 +330,50 @@ That layer is why it runs 28x faster than FLINT's own
 `arb_const_khinchin()` and reproduced the 2016 million-digit record
 roughly 300x faster (under an hour against ~12 single-core days).
 
-What remains is constant-factor tuning at best — for example, whether
-batch multimodular Bernoulli generation could edge out the reverse
-iterators at very large sizes. The genuine walls are the quadratic
-exponent, which is a property of the mathematics (next section), and the
-memory growth documented above — neither yields to engineering.
+What remains is constant-factor tuning — and one such factor has been
+measured and banked (next subsection): CPU-tuned builds of GMP and
+FLINT are worth 1.4-1.5x on this machine. Beyond that, candidates like
+batch multimodular Bernoulli generation are speculative. The genuine
+walls are the quadratic exponent, which is a property of the
+mathematics (next section), and the memory growth documented above —
+neither yields to engineering.
+
+### CPU-tuned libraries: a measured 1.4-1.5x
+
+Profiling shows ~75% of the C program's cycles inside GMP's mpn
+assembly — and on this machine the hot symbols carry the `_x86_64`
+suffix: Fedora's "fat" GMP selects CPU paths at runtime, but the Core
+Ultra 9 (Arrow Lake) is newer than gmp 6.3.0's recognizer, so it falls
+back to *generic* x86-64 code and never uses the mulx/adx assembly the
+CPU supports. Forcing the tuning at build time fixes it:
+
+```sh
+# GMP with the skylake (mulx/adx) assembly paths; gnu17 works around
+# GMP 6.3 configure vs GCC >= 15's C23 default:
+./configure --build=skylake-pc-linux-gnu CFLAGS="-O2 -std=gnu17 -fomit-frame-pointer"
+# FLINT with native codegen, linked against that GMP:
+./configure CFLAGS="-O3 -march=native" --with-gmp-lib=... --with-gmp-include=...
+```
+
+Measured with both tuned libraries via `LD_PRELOAD` (digits verified
+identical):
+
+| Digits | System libraries | Tuned libraries | Gain |
+|---:|---:|---:|---:|
+| 50,000 | 3.19 s | 2.30 s | 1.38x |
+| 100,000 | 12.96 s | 8.58 s | 1.51x |
+
+The gain grows with size and would put the million-digit run near ~38
+minutes. The tuned pair lives in `~/opt/tuned-mathlibs/`; opt in with
+
+```sh
+LD_PRELOAD="$HOME/opt/tuned-mathlibs/libgmp.so.10 $HOME/opt/tuned-mathlibs/libflint.so.22" ./khinchin-fast ...
+```
+
+The tables elsewhere in this README keep the stock-Fedora numbers so
+they stay reproducible on an unmodified system. (The GMP finding
+applies to every GMP consumer on this machine — PARI, yafu, the ports —
+not just this program.)
 
 ## Known mathematical approaches (all ~quadratic)
 
