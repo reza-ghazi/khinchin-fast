@@ -195,7 +195,12 @@ seven produce byte-identical output files on this machine.
   measured 1.9-2.7x across the family. Go fans the convolutions out
   over goroutines and Java over parallel streams; Node, Ruby, and Perl
   are serial. All verified byte-identical to the C output at 1000
-  digits. (Perl's port carries
+  digits. Perl doubles as a control experiment for the arithmetic
+  layer: on the bundled FastCalc backend (schoolbook multiplication) it
+  scales like d^3.6 — 31 s at 1000 digits and an extrapolated ~32
+  hours at 10,000 — while installing Math::BigInt::GMP, which the port
+  prefers automatically, drops that to 1.19 s and 78.7 s: a ~1,500x
+  swing from the bignum library alone, with zero code changes. (Perl's port carries
   battle scars: Math::BigInt's bdiv returns (quotient, remainder) in
   list context, and a stray remainder in an argument list is silently
   taken as an accuracy parameter — two bugs of that family had to be
@@ -255,10 +260,10 @@ machine. Rows are sorted by the 10,000-digit time:
 | OCaml — `ports/khinchin.ml`, Zarith | serial | 0.07 s | 55.7 s |
 | Python — `ports/khinchin.py`, pure-Python backend | serial | 0.16 s | 64.5 s |
 | Ruby — `ports/khinchin.rb`, native Integer | serial | 0.19 s | 71.2 s |
+| Perl — `ports/khinchin.pl`, Math::BigInt + GMP backend | serial | 1.19 s | 78.7 s |
 | Node.js — `ports/khinchin.mjs`, native BigInt | serial | 0.24 s | 127 s |
 | Maple — `ports/khinchin.mpl` | serial | 8.5 s | 298 s |
 | Mathematica built-in `Khinchin` | serial | 0.57 s | 508 s |
-| Perl — `ports/khinchin.pl`, Math::BigInt/FastCalc | serial | 31 s | not run |
 | mpmath built-in `mp.khinchin` | serial | 4.67 s | 11,634 s |
 
 \* in-process, excluding interpreter startup (~0.2 s for Julia, ~3.5 s

@@ -9,9 +9,13 @@
 #   h(n) = sum_{j=1}^{2n-1} (-1)^(j+1)/j.
 #
 # Runs on Math::BigInt in fixed point (scale 2^wp) — the "native bignum"
-# data point for Perl, core modules only (the GMP backend is picked up
-# automatically when installed, FastCalc or pure-Perl Calc otherwise;
-# expect pure-Perl backends to be slow).  The port carries its own
+# data point for Perl. The backend matters enormously: with
+# Math::BigInt::GMP installed (cpan; set PERL5LIB for a user-local
+# install) 10,000 digits take 78.7 s, while the bundled FastCalc
+# backend has schoolbook multiplication and scales like d^3.6 —
+# measured 31 s at 1000 digits, 370 s at 2000, an extrapolated ~32
+# hours at 10,000. The two backends bracket exactly what a
+# subquadratic bignum library is worth.  The port carries its own
 # fixed-point kit: pi by Machin's formula, logarithms via the atanh(1/q)
 # series, exp by argument-halving plus Taylor; even zeta values come
 # from the positive-term recurrence (n + 1/2) zeta(2n) = sum_j zeta(2j)
