@@ -1,3 +1,4 @@
 khinchin-fast
 *.o
 CLAUDE.md
+__pycache__/
