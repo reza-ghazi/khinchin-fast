@@ -192,6 +192,57 @@ Julia/Rust/Fortran ports pay the `O(M^2)` zeta recurrence and Python adds
 mpmath's pure-Python bignum layer on a serial design. Julia's time
 excludes JIT warmup; Maple and Mathematica are not installed here.
 
+## Why this is the fastest known approach
+
+The claim has three layers — the formula, the zeta strategy inside it, and
+the constant factors — and each was measured against its alternatives
+rather than assumed.
+
+**The formula.** Every known expression for `K0` was considered. The
+defining product converges far too slowly for even tens of digits. The
+dilogarithm and integral closed forms (`mathematical_background.md`,
+section 4.5) converge only like `1/k^2` — verified numerically, and
+useless for digit computation. The plain BBC zeta series needs `~P/2`
+full-precision zeta terms; the accelerated form used here, with the small
+`k` pulled out of every zeta tail, needs only `~P/(2 log2 N)`. That gap
+alone is measurable: mpmath's built-in uses the plain series, and
+`ports/khinchin.py`'s switch to the accelerated one — same language, same
+bignum layer — is worth 30-37x. Gourdon/Sebah-style rearrangements are
+the same family with different constants. The only thing that would beat
+this family is a single series with rational terms amenable to binary
+splitting — quasi-linear, like the formulas behind pi records — and no
+such series for `K0` is known; finding one is an open problem (next
+section). Within current mathematical knowledge, the accelerated zeta
+series is the end of the line.
+
+**The zeta values.** The accelerated series stands or falls on how fast
+the `zeta(2n)` values arrive, and the ports in this repository ended up
+being a controlled experiment across every practical strategy — same
+machine, identical output digits:
+
+| zeta(2n) strategy | Where | 10,000 digits |
+|---|---|---:|
+| Reverse Bernoulli iterator + direct low-precision tail region | C, this program | 0.15 s |
+| `arb_zeta_ui` per term at full precision | `KHINCHIN_BACKEND=arb` | 0.64 s, and scaling worse (34.6 s vs 2.67 s at 50k) |
+| PARI's Bernoulli machinery | `ports/khinchin.gp` | 2.8 s |
+| Positive-term recurrence, `O(M^2)` | Julia/Rust/Fortran ports | 10-19 s |
+
+**The constant factors.** On top of the winning strategy, this program
+adds per-term dropping precision (a term of magnitude `N^(-2n)` only
+needs about `P - 2n log2 N` accurate bits, so most arithmetic runs far
+below full precision), the two-region split that eliminates Bernoulli
+numbers entirely where the exact `B_2n` would carry more bits than the
+working precision itself, and cost-model load balancing across threads.
+That layer is why it runs 28x faster than FLINT's own
+`arb_const_khinchin()` and reproduced the 2016 million-digit record
+roughly 300x faster (under an hour against ~12 single-core days).
+
+What remains is constant-factor tuning at best — for example, whether
+batch multimodular Bernoulli generation could edge out the reverse
+iterators at very large sizes. The genuine walls are the quadratic
+exponent, which is a property of the mathematics (next section), and the
+memory growth documented above — neither yields to engineering.
+
 ## Known mathematical approaches (all ~quadratic)
 
 Every published way to compute Khinchin's constant to high precision reduces
