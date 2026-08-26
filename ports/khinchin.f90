@@ -5,23 +5,19 @@
 !   ln(2) ln(K0) = -sum_{k=2}^{N-1} ln((k-1)/k) ln((k+1)/k)
 !                  + sum_{n>=1} (zeta(2n) - 1 - sum_{k=2}^{N-1} k^(-2n)) / n * h(n),
 !
-!   h(n) = sum_{j=1}^{2n-1} (-1)^(j+1)/j,
-!
-! with the even zeta values from the classical positive-term recurrence
-!
-!   (n + 1/2) zeta(2n) = sum_{j=1}^{n-1} zeta(2j) zeta(2n-2j),  zeta(2) = pi^2/6.
+!   h(n) = sum_{j=1}^{2n-1} (-1)^(j+1)/j.
 !
 ! Standard Fortran has no arbitrary-precision arithmetic, so this port
-! binds GNU MPFR directly through ISO_C_BINDING - the same engine that
-! backs Julia's BigFloat and Rust's rug in the sibling ports, so all of
-! them produce identical digits.  OpenMP parallelises the recurrence
-! convolutions (halved via their j <-> n-j symmetry) and the main loop's
-! equal-count blocks, each seeded with h(first) summed directly and a
-! power table started at k^(-2 first).  Guard bits absorb the recurrence
-! drift; unlike the C program, nothing here is interval-certified.
+! binds FLINT/Arb directly through ISO_C_BINDING - the same library the
+! C program uses - working only through Arb's pointer-based API
+! (_arb_vec_init), so no C struct layouts need to be declared.  Each
+! zeta(2n) comes from arb_zeta_ui at full precision, the strategy of the
+! C program's KHINCHIN_BACKEND=arb cross-check backend, with the n-range
+! split across OpenMP threads in equal-count blocks.  GNU MPFR (also
+! bound below) formats the final decimal output.
 !
 ! Build and run:
-!   gfortran -O2 -fopenmp -o khinchin-f90 khinchin.f90 -lmpfr -lgmp
+!   gfortran -O2 -fopenmp -o khinchin-f90 khinchin.f90 -lflint -lmpfr -lgmp
 !   ./khinchin-f90 DIGITS [OUTPUT_FILE]    (default 100)
 !
 ! With OUTPUT_FILE the decimal value plus a newline is written there
@@ -51,98 +47,6 @@ module mpfr_binding
             import :: mpfr_t
             type(mpfr_t), intent(inout) :: x
         end subroutine
-        integer(c_int) function mpfr_set_ui(x, u, rnd) bind(c)
-            import :: mpfr_t, c_int, c_long
-            type(mpfr_t), intent(inout) :: x
-            integer(c_long), value :: u
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_add(r, a, b, rnd) bind(c)
-            import :: mpfr_t, c_int
-            type(mpfr_t), intent(inout) :: r
-            type(mpfr_t), intent(in) :: a, b
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_sub(r, a, b, rnd) bind(c)
-            import :: mpfr_t, c_int
-            type(mpfr_t), intent(inout) :: r
-            type(mpfr_t), intent(in) :: a, b
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_mul(r, a, b, rnd) bind(c)
-            import :: mpfr_t, c_int
-            type(mpfr_t), intent(inout) :: r
-            type(mpfr_t), intent(in) :: a, b
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_div(r, a, b, rnd) bind(c)
-            import :: mpfr_t, c_int
-            type(mpfr_t), intent(inout) :: r
-            type(mpfr_t), intent(in) :: a, b
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_sqr(r, a, rnd) bind(c)
-            import :: mpfr_t, c_int
-            type(mpfr_t), intent(inout) :: r
-            type(mpfr_t), intent(in) :: a
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_mul_ui(r, a, u, rnd) bind(c)
-            import :: mpfr_t, c_int, c_long
-            type(mpfr_t), intent(inout) :: r
-            type(mpfr_t), intent(in) :: a
-            integer(c_long), value :: u
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_div_ui(r, a, u, rnd) bind(c)
-            import :: mpfr_t, c_int, c_long
-            type(mpfr_t), intent(inout) :: r
-            type(mpfr_t), intent(in) :: a
-            integer(c_long), value :: u
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_sub_ui(r, a, u, rnd) bind(c)
-            import :: mpfr_t, c_int, c_long
-            type(mpfr_t), intent(inout) :: r
-            type(mpfr_t), intent(in) :: a
-            integer(c_long), value :: u
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_ui_div(r, u, a, rnd) bind(c)
-            import :: mpfr_t, c_int, c_long
-            type(mpfr_t), intent(inout) :: r
-            integer(c_long), value :: u
-            type(mpfr_t), intent(in) :: a
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_ui_pow_ui(r, b, e, rnd) bind(c)
-            import :: mpfr_t, c_int, c_long
-            type(mpfr_t), intent(inout) :: r
-            integer(c_long), value :: b, e
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_log(r, a, rnd) bind(c)
-            import :: mpfr_t, c_int
-            type(mpfr_t), intent(inout) :: r
-            type(mpfr_t), intent(in) :: a
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_exp(r, a, rnd) bind(c)
-            import :: mpfr_t, c_int
-            type(mpfr_t), intent(inout) :: r
-            type(mpfr_t), intent(in) :: a
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_const_pi(r, rnd) bind(c)
-            import :: mpfr_t, c_int
-            type(mpfr_t), intent(inout) :: r
-            integer(c_int), value :: rnd
-        end function
-        integer(c_int) function mpfr_const_log2(r, rnd) bind(c)
-            import :: mpfr_t, c_int
-            type(mpfr_t), intent(inout) :: r
-            integer(c_int), value :: rnd
-        end function
         type(c_ptr) function mpfr_get_str(buf, expo, base, n, x, rnd) bind(c)
             import :: mpfr_t, c_int, c_long, c_ptr, c_size_t
             type(c_ptr), value :: buf
@@ -159,16 +63,119 @@ module mpfr_binding
     end interface
 end module mpfr_binding
 
+module arb_binding
+    use iso_c_binding
+    implicit none
+
+    ! Arb values are handled purely as opaque pointers from
+    ! _arb_vec_init, so no struct layout is required.
+    interface
+        type(c_ptr) function arb_vec_init(n) bind(c, name='_arb_vec_init')
+            import :: c_ptr, c_long
+            integer(c_long), value :: n
+        end function
+        subroutine arb_vec_clear(v, n) bind(c, name='_arb_vec_clear')
+            import :: c_ptr, c_long
+            type(c_ptr), value :: v
+            integer(c_long), value :: n
+        end subroutine
+        subroutine arb_zero(x) bind(c)
+            import :: c_ptr
+            type(c_ptr), value :: x
+        end subroutine
+        subroutine arb_one(x) bind(c)
+            import :: c_ptr
+            type(c_ptr), value :: x
+        end subroutine
+        subroutine arb_set_ui(x, u) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: x
+            integer(c_long), value :: u
+        end subroutine
+        subroutine arb_add(r, a, b, prec) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: r, a, b
+            integer(c_long), value :: prec
+        end subroutine
+        subroutine arb_sub(r, a, b, prec) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: r, a, b
+            integer(c_long), value :: prec
+        end subroutine
+        subroutine arb_mul(r, a, b, prec) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: r, a, b
+            integer(c_long), value :: prec
+        end subroutine
+        subroutine arb_div(r, a, b, prec) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: r, a, b
+            integer(c_long), value :: prec
+        end subroutine
+        subroutine arb_sub_ui(r, a, u, prec) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: r, a
+            integer(c_long), value :: u, prec
+        end subroutine
+        subroutine arb_div_ui(r, a, u, prec) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: r, a
+            integer(c_long), value :: u, prec
+        end subroutine
+        subroutine arb_mul_ui(r, a, u, prec) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: r, a
+            integer(c_long), value :: u, prec
+        end subroutine
+        subroutine arb_inv(r, a, prec) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: r, a
+            integer(c_long), value :: prec
+        end subroutine
+        subroutine arb_pow_ui(r, a, e, prec) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: r, a
+            integer(c_long), value :: e, prec
+        end subroutine
+        subroutine arb_log(r, a, prec) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: r, a
+            integer(c_long), value :: prec
+        end subroutine
+        subroutine arb_log_ui(r, u, prec) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: r
+            integer(c_long), value :: u, prec
+        end subroutine
+        subroutine arb_exp(r, a, prec) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: r, a
+            integer(c_long), value :: prec
+        end subroutine
+        subroutine arb_zeta_ui(r, u, prec) bind(c)
+            import :: c_ptr, c_long
+            type(c_ptr), value :: r
+            integer(c_long), value :: u, prec
+        end subroutine
+        subroutine arb_get_interval_mpfr(a, b, x) bind(c)
+            import :: c_ptr
+            type(c_ptr), value :: a, b, x
+        end subroutine
+    end interface
+end module arb_binding
+
 program khinchin_prog
     use iso_c_binding
     use mpfr_binding
+    use arb_binding
     use omp_lib
     implicit none
 
-    integer :: digits, prec, wp, bign, m, n, k, j, half, w, b, i, rc
+    integer :: digits, prec, wp, bign, m, k, i, tid, nthreads
     integer(c_long) :: wpl, expo
-    type(mpfr_t) :: s, t1, t2, acc
-    type(mpfr_t), allocatable :: z(:), partials(:)
+    type(c_ptr) :: s, t1, t2
+    type(c_ptr), allocatable :: partials(:)
+    type(mpfr_t), target :: out_lo, out_hi
     character(len=32) :: arg
     character(len=1024) :: outpath
     integer :: outunit
@@ -190,96 +197,51 @@ program khinchin_prog
     bign = max(3, int(real(wp, 8)**0.35d0))
     m = ceiling(wp * log(2.0d0) / (2 * log(real(bign, 8)))) + 1
 
-    call mpfr_init2(s, wpl);  rc = mpfr_set_ui(s, 0_c_long, RNDN)
-    call mpfr_init2(t1, wpl)
-    call mpfr_init2(t2, wpl)
-    call mpfr_init2(acc, wpl)
+    s = arb_vec_init(1_c_long)
+    t1 = arb_vec_init(1_c_long)
+    t2 = arb_vec_init(1_c_long)
+    call arb_zero(s)
 
     ! Finite logarithmic correction.
     do k = 2, bign - 1
-        rc = mpfr_set_ui(t1, int(k - 1, c_long), RNDN)
-        rc = mpfr_div_ui(t1, t1, int(k, c_long), RNDN)
-        rc = mpfr_log(t1, t1, RNDN)
-        rc = mpfr_set_ui(t2, int(k + 1, c_long), RNDN)
-        rc = mpfr_div_ui(t2, t2, int(k, c_long), RNDN)
-        rc = mpfr_log(t2, t2, RNDN)
-        rc = mpfr_mul(t1, t1, t2, RNDN)
-        rc = mpfr_sub(s, s, t1, RNDN)
+        call arb_set_ui(t1, int(k - 1, c_long))
+        call arb_div_ui(t1, t1, int(k, c_long), wpl)
+        call arb_log(t1, t1, wpl)
+        call arb_set_ui(t2, int(k + 1, c_long))
+        call arb_div_ui(t2, t2, int(k, c_long), wpl)
+        call arb_log(t2, t2, wpl)
+        call arb_mul(t1, t1, t2, wpl)
+        call arb_sub(s, s, t1, wpl)
     end do
 
-    ! zeta(2), zeta(4), ..., zeta(2M) by the positive recurrence, using
-    ! the symmetry of the convolution: only j <= (n-1)/2 is summed,
-    ! doubled, plus the middle square when n is even.
-    allocate(z(m))
-    do n = 1, m
-        call mpfr_init2(z(n), wpl)
+    ! Zeta range in equal-count blocks, one per thread, ascending n with
+    ! incremental power table and harmonic weight, as in the C program's
+    ! KHINCHIN_BACKEND=arb backend.
+    nthreads = min(omp_get_max_threads(), m)
+    allocate(partials(nthreads))
+    do i = 1, nthreads
+        partials(i) = arb_vec_init(1_c_long)
     end do
-    rc = mpfr_const_pi(z(1), RNDN)
-    rc = mpfr_sqr(z(1), z(1), RNDN)
-    rc = mpfr_div_ui(z(1), z(1), 6_c_long, RNDN)
-    do n = 2, m
-        half = (n - 1) / 2
-        rc = mpfr_set_ui(acc, 0_c_long, RNDN)
-        if (half >= 64) then
-            !$omp parallel private(j, rc) shared(z, acc, half, n, wpl)
-            block
-                type(mpfr_t) :: a, prod
-                integer :: lo, hi, tid, nth
-                call mpfr_init2(a, wpl);  rc = mpfr_set_ui(a, 0_c_long, RNDN)
-                call mpfr_init2(prod, wpl)
-                tid = omp_get_thread_num()
-                nth = omp_get_num_threads()
-                lo = 1 + (half * tid) / nth
-                hi = (half * (tid + 1)) / nth
-                do j = lo, hi
-                    rc = mpfr_mul(prod, z(j), z(n - j), RNDN)
-                    rc = mpfr_add(a, a, prod, RNDN)
-                end do
-                !$omp critical
-                rc = mpfr_add(acc, acc, a, RNDN)
-                !$omp end critical
-                call mpfr_clear(prod)
-                call mpfr_clear(a)
-            end block
-            !$omp end parallel
-        else
-            do j = 1, half
-                rc = mpfr_mul(t1, z(j), z(n - j), RNDN)
-                rc = mpfr_add(acc, acc, t1, RNDN)
-            end do
-        end if
-        rc = mpfr_mul_ui(acc, acc, 2_c_long, RNDN)
-        if (mod(n, 2) == 0) then
-            rc = mpfr_sqr(t1, z(n / 2), RNDN)
-            rc = mpfr_add(acc, acc, t1, RNDN)
-        end if
-        rc = mpfr_mul_ui(acc, acc, 2_c_long, RNDN)
-        rc = mpfr_div_ui(z(n), acc, int(2 * n + 1, c_long), RNDN)
+    !$omp parallel num_threads(nthreads) private(tid)
+    tid = omp_get_thread_num() + 1
+    call zeta_block(partials(tid), &
+        1 + (m * (tid - 1)) / nthreads, (m * tid) / nthreads)
+    !$omp end parallel
+    do i = 1, nthreads
+        call arb_add(s, s, partials(i), wpl)
+        call arb_vec_clear(partials(i), 1_c_long)
     end do
 
-    ! Main loop in equal-count blocks, one thread per block.
-    w = max(1, min(omp_get_max_threads(), m / 8))
-    allocate(partials(w))
-    do b = 1, w
-        call mpfr_init2(partials(b), wpl)
-    end do
-    !$omp parallel do schedule(static, 1) private(b)
-    do b = 1, w
-        call block_sum(partials(b), 1 + (m * (b - 1)) / w, (m * b) / w)
-    end do
-    !$omp end parallel do
-    do b = 1, w
-        rc = mpfr_add(s, s, partials(b), RNDN)
-        call mpfr_clear(partials(b))
-    end do
+    call arb_log_ui(t1, 2_c_long, wpl)
+    call arb_div(s, s, t1, wpl)
+    call arb_exp(s, s, wpl)
 
-    rc = mpfr_const_log2(t1, RNDN)
-    rc = mpfr_div(s, s, t1, RNDN)
-    rc = mpfr_exp(s, s, RNDN)
-
-    ! digits + 1 significant digits, correctly rounded: "2" + digits.
+    ! Midpoint out through MPFR, then decimal formatting as before.
+    call mpfr_init2(out_lo, wpl)
+    call mpfr_init2(out_hi, wpl)
+    call arb_get_interval_mpfr(c_loc(out_lo), c_loc(out_hi), s)
     cstr = mpfr_get_str(c_null_ptr, expo, 10_c_int, &
-        int(digits + 1, c_size_t), s, RNDN)
+        int(digits + 1, c_size_t), out_lo, RNDN)
     call c_f_pointer(cstr, chars, [digits + 2])
     allocate(character(len=digits + 2) :: out)
     out(1:1) = chars(1)
@@ -296,72 +258,71 @@ program khinchin_prog
         print '(A)', out
     end if
     call mpfr_free_str(cstr)
-
-    do n = 1, m
-        call mpfr_clear(z(n))
-    end do
-    call mpfr_clear(acc)
-    call mpfr_clear(t2)
-    call mpfr_clear(t1)
-    call mpfr_clear(s)
+    call mpfr_clear(out_hi)
+    call mpfr_clear(out_lo)
+    call arb_vec_clear(t2, 1_c_long)
+    call arb_vec_clear(t1, 1_c_long)
+    call arb_vec_clear(s, 1_c_long)
 
 contains
 
-    ! Accelerated terms for n in [first, last], accumulated into sb.
-    subroutine block_sum(sb, first, last)
-        type(mpfr_t), intent(inout) :: sb
+    ! Accelerated terms for n in [first, last]: zeta(2n) via arb_zeta_ui,
+    ! shared incremental power table, ascending harmonic weight.
+    subroutine zeta_block(sb, first, last)
+        type(c_ptr), intent(in) :: sb
         integer, intent(in) :: first, last
-        type(mpfr_t) :: h, tail, tmp
-        type(mpfr_t), allocatable :: pw(:)
-        integer :: n, k, j, rc
+        type(c_ptr) :: zt, h, term, recip, powers
+        type(c_ptr), allocatable :: pw(:)
+        integer :: n, k, j
 
-        call mpfr_init2(h, wpl);    rc = mpfr_set_ui(h, 0_c_long, RNDN)
-        call mpfr_init2(tail, wpl)
-        call mpfr_init2(tmp, wpl)
-        rc = mpfr_set_ui(sb, 0_c_long, RNDN)
+        zt = arb_vec_init(1_c_long)
+        h = arb_vec_init(1_c_long)
+        term = arb_vec_init(1_c_long)
+        recip = arb_vec_init(1_c_long)
+        call arb_zero(sb)
 
-        ! h(first) = sum_{j=1}^{2 first - 1} (-1)^(j+1)/j.
-        do j = 1, 2 * first - 1
-            rc = mpfr_set_ui(tmp, 1_c_long, RNDN)
-            rc = mpfr_div_ui(tmp, tmp, int(j, c_long), RNDN)
-            if (mod(j, 2) == 1) then
-                rc = mpfr_add(h, h, tmp, RNDN)
-            else
-                rc = mpfr_sub(h, h, tmp, RNDN)
-            end if
+        ! h(first) = 1 - sum_{n<first} 1/(2n(2n+1)).
+        call arb_one(h)
+        do n = 1, first - 1
+            call arb_set_ui(recip, int(2 * n, c_long))
+            call arb_mul_ui(recip, recip, int(2 * n + 1, c_long), wpl)
+            call arb_inv(recip, recip, wpl)
+            call arb_sub(h, h, recip, wpl)
         end do
 
+        ! Power table entry k starts at k^(-2(first-1)); the loop
+        ! advances it once per n.
         allocate(pw(2:bign - 1))
         do k = 2, bign - 1
-            call mpfr_init2(pw(k), wpl)
-            rc = mpfr_ui_pow_ui(pw(k), int(k, c_long), &
-                int(2 * first, c_long), RNDN)
-            rc = mpfr_ui_div(pw(k), 1_c_long, pw(k), RNDN)
+            pw(k) = arb_vec_init(1_c_long)
+            call arb_set_ui(pw(k), int(k, c_long))
+            call arb_pow_ui(pw(k), pw(k), int(2 * (first - 1), c_long), wpl)
+            call arb_inv(pw(k), pw(k), wpl)
         end do
 
         do n = first, last
-            rc = mpfr_sub_ui(tail, z(n), 1_c_long, RNDN)
+            call arb_zeta_ui(zt, int(2 * n, c_long), wpl)
+            call arb_sub_ui(zt, zt, 1_c_long, wpl)
             do k = 2, bign - 1
-                rc = mpfr_sub(tail, tail, pw(k), RNDN)
+                call arb_div_ui(pw(k), pw(k), int(k * k, c_long), wpl)
+                call arb_sub(zt, zt, pw(k), wpl)
             end do
-            rc = mpfr_mul(tail, tail, h, RNDN)
-            rc = mpfr_div_ui(tail, tail, int(n, c_long), RNDN)
-            rc = mpfr_add(sb, sb, tail, RNDN)
-            rc = mpfr_set_ui(tmp, 1_c_long, RNDN)
-            rc = mpfr_div_ui(tmp, tmp, int(2 * n, c_long) &
-                * int(2 * n + 1, c_long), RNDN)
-            rc = mpfr_sub(h, h, tmp, RNDN)
-            do k = 2, bign - 1
-                rc = mpfr_div_ui(pw(k), pw(k), int(k * k, c_long), RNDN)
-            end do
+            call arb_div_ui(term, zt, int(n, c_long), wpl)
+            call arb_mul(term, term, h, wpl)
+            call arb_add(sb, sb, term, wpl)
+            call arb_set_ui(recip, int(2 * n, c_long))
+            call arb_mul_ui(recip, recip, int(2 * n + 1, c_long), wpl)
+            call arb_inv(recip, recip, wpl)
+            call arb_sub(h, h, recip, wpl)
         end do
 
         do k = 2, bign - 1
-            call mpfr_clear(pw(k))
+            call arb_vec_clear(pw(k), 1_c_long)
         end do
-        call mpfr_clear(tmp)
-        call mpfr_clear(tail)
-        call mpfr_clear(h)
-    end subroutine block_sum
+        call arb_vec_clear(recip, 1_c_long)
+        call arb_vec_clear(term, 1_c_long)
+        call arb_vec_clear(h, 1_c_long)
+        call arb_vec_clear(zt, 1_c_long)
+    end subroutine zeta_block
 
 end program khinchin_prog

@@ -18,7 +18,9 @@ later. MPFR and GMP are distributed under their respective GNU licenses.
 
 The reference ports under `ports/` use further third-party software as
 external libraries or interpreters (nothing from them is redistributed
-here): `khinchin.py` builds on mpmath (BSD 3-clause); `khinchin.gp` runs
-under PARI/GP (GPL v2+); `khinchin-rs` depends on the Rust crates rug
-(LGPL v3+) and rayon (MIT/Apache-2.0); `khinchin.f90` and `khinchin.jl`
-bind or wrap GNU MPFR (LGPL v3+).
+here): `khinchin.py` and `khinchin_mt.py` build on mpmath (BSD 3-clause);
+`khinchin.gp` runs under PARI/GP (GPL v2+); `khinchin-rs` depends on the
+Rust crates rug (LGPL v3+), rayon (MIT/Apache-2.0), and cc (MIT/Apache-2.0),
+and links FLINT (LGPL v3+) for its reverse Bernoulli iterator;
+`khinchin.f90` and `khinchin.jl` bind FLINT/Arb and GNU MPFR (both
+LGPL v3+).

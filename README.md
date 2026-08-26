@@ -161,14 +161,22 @@ seven produce byte-identical output files on this machine.
   scripts behind the comparison table above. Each parallel block seeds its
   alternating-harmonic weight `h(first)` by direct summation, which
   measured ~4x faster at 10k digits than seeding with `psi`.
-- `ports/khinchin.jl` — Julia on stock `BigFloat` (MPFR), no packages,
-  multithreaded (run with `julia -t auto`): 6.3x over serial at 10k
-  digits.
-- `ports/khinchin-rs/` — Rust on `rug` (GMP/MPFR) with rayon: 13x over
-  serial at 10k digits. `cargo run --release -- 1000 out.txt`.
-- `ports/khinchin.f90` — Fortran bound directly to GNU MPFR through
-  standard `ISO_C_BINDING` (Fortran itself has no arbitrary-precision
-  arithmetic), OpenMP-parallel: 9.1x over serial at 10k digits.
+- `ports/khinchin.jl` — Julia driving FLINT/Arb directly through plain
+  `ccall` against the system libflint (no packages): `arb_zeta_ui` per
+  term, blocked across Julia threads (`julia -t auto`). Only Arb's
+  pointer-based API is used, so no C struct layouts are declared. 27x
+  faster than the previous BigFloat/recurrence version.
+- `ports/khinchin-rs/` — Rust with the C program's own two-region split:
+  FLINT's reverse Bernoulli iterator (`bernoulli_rev`, reached through a
+  30-line C shim built by `build.rs`, since its struct layout is not
+  expressible in Rust FFI) streams exact `B_2n` per block below
+  `n_direct`, and literal tail sums cover the region above it — no
+  Bernoulli numbers there at all. rug arithmetic, rayon blocks. 15.5x
+  faster than the previous recurrence version.
+- `ports/khinchin.f90` — Fortran binding FLINT/Arb through standard
+  `ISO_C_BINDING` (pointer-based API only): `arb_zeta_ui` per term,
+  OpenMP blocks, GNU MPFR for the final decimal formatting. 16.7x faster
+  than the previous MPFR/recurrence version.
 - `ports/khinchin.mpl` — Maple version of the same series, serial.
   Verified with Maple 2024.2: byte-identical output to the C program at
   1000 digits, digit-exact against the reference file at 10,000.
@@ -180,14 +188,15 @@ seven produce byte-identical output files on this machine.
   `KhinchinBuiltin` for cross-checking. Byte-identical output to the C
   program at 1000 digits.
 
-The Julia, Rust, and Fortran ports take their even zeta values from the
+Earlier versions of the Julia, Rust, and Fortran ports were
+deliberately self-contained, taking their even zeta values from the
 classical positive-term recurrence
-`(n + 1/2) zeta(2n) = sum_j zeta(2j) zeta(2n-2j)` — numerically benign
-(all terms positive, roughly linear error growth) and free of Bernoulli
-numbers, at the price of `O(M^2)` full-precision products, which is what
-dominates their runtimes beyond a few thousand digits. In all of them the
-recurrence convolutions (halved via their `j <-> n-j` symmetry) and the
-blocked main loop run in parallel.
+`(n + 1/2) zeta(2n) = sum_j zeta(2j) zeta(2n-2j)` — numerically benign,
+but `O(M^2)` full-precision products, which capped them at 9.8-19.2 s
+for 10k digits. Binding FLINT instead (history has the old versions)
+bought 15-27x and demonstrated the point the table below makes: the
+ranking is set by the zeta strategy and the bignum library, not by the
+host language.
 
 ### Measured speed by language
 
@@ -198,29 +207,28 @@ are sorted by the 10,000-digit time:
 | Implementation | Parallelism | 1,000 digits | 10,000 digits |
 |---|---|---:|---:|
 | C — `khinchin-fast` (this repo) | OpenMP | 0.007 s | 0.15 s |
+| Rust + FLINT `bernoulli_rev` — `ports/khinchin-rs` | rayon | 0.025 s | 0.63 s |
+| Julia + Arb — `ports/khinchin.jl` | threads | 0.005 s* | 0.72 s |
+| Fortran + Arb — `ports/khinchin.f90` | OpenMP | 0.024 s | 0.74 s |
 | PARI/GP — `ports/khinchin.gp` | parvector | 0.05 s | 2.8 s |
 | Python + gmpy2, two-region — `ports/khinchin_mt.py` | threads | 0.03 s | 5.0 s |
 | Python + gmpy2 — `ports/khinchin.py`, GMP backend | serial | 0.05 s | 9.0 s |
-| Rust — `ports/khinchin-rs` | rayon | 0.04 s | 9.8 s |
-| Fortran + MPFR — `ports/khinchin.f90` | OpenMP | 0.05 s | 12.3 s |
-| Julia — `ports/khinchin.jl` | threads | 0.22 s | 19.2 s |
 | Mathematica — `ports/khinchin.wl` | serial | 0.12 s | 21.7 s |
 | Python — `ports/khinchin.py`, pure-Python backend | serial | 0.16 s | 64.5 s |
 | Maple — `ports/khinchin.mpl` | serial | 8.5 s | 298 s |
 | Mathematica built-in `Khinchin` | serial | 0.57 s | 508 s |
 | mpmath built-in `mp.khinchin` | serial | 4.67 s | not run |
 
-The C program leads by roughly 20-440x at 10k digits: it is the only
-implementation with per-term dropping precision, the two-region split,
-and FLINT's reverse Bernoulli iterator. PARI/GP places second because its
-`zeta(2n)` rides PARI's fast Bernoulli machinery, while the
-Julia/Rust/Fortran ports pay the `O(M^2)` zeta recurrence, Python adds
-mpmath's pure-Python bignum layer on a serial design (with gmpy2's GMP
-backend the identical file jumps ahead of the Rust and Fortran ports),
-and Maple pays its software-float `evalf` layer serially. Mathematica's symbolic `Zeta[2n]`
-(exact Bernoulli rationals) places its port between Julia and Python
-despite being serial — and 23x ahead of its own built-in at 10k digits.
-Julia's time excludes JIT warmup.
+\* in-process, excluding Julia startup; the others are full wall-clock.
+
+The ranking tracks the zeta strategy, not the language. The C program
+still leads — dropping per-term precision and a rigorously certified
+result on top of the same FLINT machinery — but the FLINT-bound
+Rust/Julia/Fortran ports now sit within 4-5x of it and ahead of
+everything else. PARI/GP rides PARI's Bernoulli machinery; the Python
+ports ride mpmath's (pure-Python or GMP-backed); Mathematica's port
+rides its symbolic `Zeta[2n]` and is 23x ahead of the built-in
+`Khinchin`; Maple pays its software-float `evalf` layer serially.
 
 ## Why this is the fastest known approach
 
@@ -253,9 +261,10 @@ machine, identical output digits:
 | zeta(2n) strategy | Where | 10,000 digits |
 |---|---|---:|
 | Reverse Bernoulli iterator + direct low-precision tail region | C, this program | 0.15 s |
-| `arb_zeta_ui` per term at full precision | `KHINCHIN_BACKEND=arb` | 0.64 s, and scaling worse (34.6 s vs 2.67 s at 50k) |
+| `arb_zeta_ui` per term at full precision | `KHINCHIN_BACKEND=arb`, Julia/Fortran ports | 0.64-0.74 s, and scaling worse (34.6 s vs 2.67 s at 50k) |
 | PARI's Bernoulli machinery | `ports/khinchin.gp` | 2.8 s |
-| Positive-term recurrence, `O(M^2)` | Julia/Rust/Fortran ports | 10-19 s |
+| Reverse Bernoulli + direct tail (no dropping precision) | Rust port | 0.63 s |
+| Positive-term recurrence, `O(M^2)` | earlier Julia/Rust/Fortran ports | 10-19 s |
 | Symbolic exact `Zeta[2n]` (Bernoulli rationals) | Mathematica port | 21.7 s |
 
 **The constant factors.** On top of the winning strategy, this program

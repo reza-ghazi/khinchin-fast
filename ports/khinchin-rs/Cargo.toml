@@ -7,6 +7,10 @@ description = "Khinchin's constant (OEIS A002210) via the accelerated zeta serie
 [dependencies]
 rug = "1"
 rayon = "1"
+gmp-mpfr-sys = "1"
+
+[build-dependencies]
+cc = "1"
 
 [profile.release]
 lto = true

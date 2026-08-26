@@ -274,18 +274,17 @@ quadrature.
 
 Beyond the Python and GP ports mentioned above, this repository's `ports/`
 directory carries the accelerated series of 4.3 in five more systems:
-Julia (threaded `BigFloat`), Rust (`rug` with rayon), Fortran (GNU MPFR
-bound through `ISO_C_BINDING`, OpenMP-parallel), Maple, and Mathematica
-(accelerated series over symbolic `Zeta[2n]`, 12.7–23x faster than the
-built-in constant).
-The Julia, Rust, and Fortran ports obtain the even zeta values from the
-classical positive-term recurrence
-`(n + 1/2) zeta(2n) = sum_{j=1}^{n-1} zeta(2j) zeta(2n-2j)` instead of
-Bernoulli numbers — numerically benign, but `O(M^2)` full-precision
-products, which bounds their speed. Every executable port takes
-`DIGITS [OUTPUT_FILE]`, and all locally testable ones write output files
-byte-identical to the C program's; `README.md` carries the measured
-cross-language speed table.
+Julia and Fortran (both binding FLINT/Arb directly, `arb_zeta_ui` per
+term, threaded), Rust (FLINT's reverse Bernoulli iterator plus the
+direct-tail region, mirroring the C program's structure), Maple, and
+Mathematica (accelerated series over symbolic `Zeta[2n]`, 12.7–23x
+faster than the built-in constant). Earlier versions of the
+Julia/Rust/Fortran ports used the classical positive-term recurrence
+`(n + 1/2) zeta(2n) = sum_{j=1}^{n-1} zeta(2j) zeta(2n-2j)` — numerically
+benign but `O(M^2)` full-precision products; binding FLINT bought
+15–27x. Every executable port takes `DIGITS [OUTPUT_FILE]`, and all
+locally testable ones write output files byte-identical to the C
+program's; `README.md` carries the measured cross-language speed table.
 
 ## 6. Records
 
