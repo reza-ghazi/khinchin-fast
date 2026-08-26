@@ -6,3 +6,4 @@ __pycache__/
 .ruff_cache/
 ports/khinchin-rs/target/
 *.mod
+.venv-ft/
