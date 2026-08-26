@@ -13,9 +13,9 @@
 # program uses.  There is no Maple program on the OEIS entry to compare
 # against.
 #
-# NOTE: written without access to a Maple installation - reviewed
-# against the tested Python and PARI/GP ports in this directory, but
-# not machine-tested.
+# Tested with Maple 2024.2: khinchin_to_file(1000, ...) produces a file
+# byte-identical to the C program's output (8.5 s serially; Maple's
+# evalf layer is the cost).
 #
 # Usage:  read "khinchin.mpl":
 #         khinchin(1000);

@@ -153,8 +153,9 @@ locally testable ports produce byte-identical output files.
 - `ports/khinchin.f90` — Fortran bound directly to GNU MPFR through
   standard `ISO_C_BINDING` (Fortran itself has no arbitrary-precision
   arithmetic), OpenMP-parallel: 9.1x over serial at 10k digits.
-- `ports/khinchin.mpl` — Maple version of the same series. No Maple
-  installation on this machine, so reviewed but not machine-tested.
+- `ports/khinchin.mpl` — Maple version of the same series, serial.
+  Verified with Maple 2024.2: byte-identical output to the C program at
+  1000 digits, digit-exact against the reference file at 10,000.
 - `ports/khinchin.wl` — Mathematica. Packages the built-in `N[Khinchin, d]`
   exactly as the OEIS entry's program does: with no local Mathematica to
   benchmark against, there is no evidence a hand-rolled series would beat
@@ -182,15 +183,17 @@ Same machine as the benchmarks above (24 threads), computing 1,000 and
 | Fortran + MPFR — `ports/khinchin.f90` | OpenMP | 0.05 s | 12.3 s |
 | Julia — `ports/khinchin.jl` | threads | 0.22 s | 19.2 s |
 | Python — `ports/khinchin.py` | serial | 0.16 s | 64.5 s |
+| Maple — `ports/khinchin.mpl` | serial | 8.5 s | 298 s |
 | mpmath built-in `mp.khinchin` | serial | 4.67 s | not run |
 
 The C program leads by roughly 20-440x at 10k digits: it is the only
 implementation with per-term dropping precision, the two-region split,
 and FLINT's reverse Bernoulli iterator. PARI/GP places second because its
 `zeta(2n)` rides PARI's fast Bernoulli machinery, while the
-Julia/Rust/Fortran ports pay the `O(M^2)` zeta recurrence and Python adds
-mpmath's pure-Python bignum layer on a serial design. Julia's time
-excludes JIT warmup; Maple and Mathematica are not installed here.
+Julia/Rust/Fortran ports pay the `O(M^2)` zeta recurrence, Python adds
+mpmath's pure-Python bignum layer on a serial design, and Maple pays its
+software-float `evalf` layer serially. Julia's time excludes JIT warmup;
+Mathematica is not installed here.
 
 ## Why this is the fastest known approach
 
