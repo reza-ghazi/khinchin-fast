@@ -4,3 +4,4 @@ CLAUDE.md
 __pycache__/
 .vscode/
 .ruff_cache/
+ports/khinchin-rs/target/

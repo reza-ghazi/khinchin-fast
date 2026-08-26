@@ -5,9 +5,10 @@ acceleration and an SCP-style reverse Bernoulli iterator implemented with
 FLINT/Arb. FLINT uses GMP for large integer arithmetic and Arb tracks a rigorous
 interval; the program writes a correctly rounded decimal expansion.
 
-The `ports/` directory carries single-file implementations of the same
-accelerated series for Python (30-37x faster than mpmath's built-in),
-PARI/GP, Maple, and Mathematica — see the reference-ports section below.
+The `ports/` directory carries implementations of the same accelerated
+series for Python (30-37x faster than mpmath's built-in), Julia, Rust,
+PARI/GP, Fortran, Maple, and Mathematica — see the reference-ports
+section below.
 
 ## Build
 
@@ -135,6 +136,17 @@ other systems:
   unaccelerated series; output verified against this repo's digit files.
 - `ports/khinchin.gp` — the serial and parallel (`parvector`) PARI/GP
   scripts behind the comparison table above; both verified to 1000 digits.
+- `ports/khinchin.jl` — Julia on stock `BigFloat` (MPFR), no packages.
+  The even zeta values come from the classical positive-term recurrence
+  `(n + 1/2) zeta(2n) = sum_{j} zeta(2j) zeta(2n-2j)` (numerically benign:
+  all terms positive), so no Bernoulli numbers or external zeta is needed.
+  Verified to 1000 digits.
+- `ports/khinchin-rs/` — Rust on `rug` (GMP/MPFR), same zeta recurrence.
+  Verified to 1000 digits (~0.2 s); `cargo run --release -- 1000`.
+- `ports/khinchin.f90` — Fortran in IEEE quadruple precision (REAL128),
+  same zeta recurrence. Standard Fortran has no arbitrary-precision
+  arithmetic, so it prints 30 correctly rounded digits (verified) — an
+  algorithm demonstration, not a digit chase.
 - `ports/khinchin.mpl` — Maple version of the same series. No Maple
   installation on this machine, so reviewed but not machine-tested.
 - `ports/khinchin.wl` — Mathematica. Packages the built-in `N[Khinchin, d]`

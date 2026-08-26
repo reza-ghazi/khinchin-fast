@@ -1,0 +1,11 @@
+[package]
+name = "khinchin"
+version = "0.1.0"
+edition = "2021"
+description = "Khinchin's constant (OEIS A002210) via the accelerated zeta series"
+
+[dependencies]
+rug = "1"
+
+[profile.release]
+lto = true
