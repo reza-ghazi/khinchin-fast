@@ -55,14 +55,20 @@ Intel Core Ultra 9 275HX, 24 threads, FLINT 3.4.0, August 25, 2026:
 | 50,000 | 2.67 s | 7.89 s | 34.61 s | 140 MB |
 | 100,000 | 12.09 s | 37.40 s | not run | 342 MB |
 | 200,000 | 55.75 s | 170.82 s | not run | 937 MB |
+| 1,000,000 | 3413.29 s | not run | not run | 16.1 GB |
 
-A log-log fit to these measurements is `time = O(digits^2.01)`, close to the
-theoretical quadratic behaviour of the series. It projects roughly 24 minutes
-for one million digits and about 2.2 million digits in two hours. Extrapolating
-the same local curve to one billion digits still gives on the order of 50
-years: the exponent, not the constant factor, is the obstruction (see the next
-sections), and the in-memory design would fail the memory preflight long
-before that size.
+A log-log fit to the 10k-200k measurements is `time = O(digits^2.01)`, close
+to the theoretical quadratic behaviour of the series. Beyond 200k the local
+exponent steepens (about 2.5 between 200k and 1M) as the working set outgrows
+the caches and the reverse Bernoulli iterators' quadratically growing state
+starts to dominate: one million digits took 56.9 minutes, not the ~24 the
+small-size fit projects. For context, the largest documented computation of
+Khinchin's constant was 10^6 digits in about 12 days of single-core PARI
+(University of Barcelona, 2016); this program reproduces it in under an hour.
+Extrapolating to one billion digits still gives centuries: the exponent, not
+the constant factor, is the obstruction (see the next sections), and memory
+(16.1 GB peak at 1M, growing superlinearly) walls off the current in-memory
+design a little beyond 3 million digits on a 64 GB machine.
 
 ## Comparison with PARI/GP
 

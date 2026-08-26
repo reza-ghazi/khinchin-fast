@@ -238,10 +238,10 @@ Digit-computation records for `K0` (published, widely cited):
 | 1959–1960s | tens of digits | Shanks, Wrench and others, direct product/early series |
 | 1997 | 7,350 | Bailey, Borwein, Crandall — zeta-series acceleration |
 | 1998 | 110,000 | Gourdon — refined acceleration |
-| 2000s–2020s | order 10^5–10^6 | individual computations, incl. reverse-Bernoulli implementations |
+| 2016 | 1,000,000 | University of Barcelona dynamical systems group — PARI, ~12 days, single core |
 
-For perspective, this machine reproduces the 1998 record in about 15 seconds,
-and a million digits projects to ~24 minutes. But because every known
+For perspective, this machine reproduces the 1998 record in about 15 seconds
+and the 2016 million-digit computation in 57 minutes (measured). But because every known
 algorithm costs `~d^2/polylog`, each 10x in digits costs ~100x in time:
 million-digit computations are now commodity, while 10^9 digits would take
 decades — versus minutes for `pi`, which has quasi-linear algorithms. The
