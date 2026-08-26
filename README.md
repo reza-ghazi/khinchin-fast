@@ -120,6 +120,24 @@ The GP results agree with this program's output digit for digit, which serves
 as an additional independent cross-check (different zeta implementation,
 different bignum stack above GMP).
 
+## Reference ports in other languages
+
+`ports/` holds single-file implementations of the same accelerated series for
+other systems:
+
+- `ports/khinchin.py` — fixed-point port on top of mpmath's internals.
+  Measured 30x (1000 digits) to 37x (2000 digits) faster than mpmath's
+  built-in `mp.khinchin` (the program on the OEIS entry), which uses the
+  unaccelerated series; output verified against this repo's digit files.
+- `ports/khinchin.gp` — the serial and parallel (`parvector`) PARI/GP
+  scripts behind the comparison table above; both verified to 1000 digits.
+- `ports/khinchin.mpl` — Maple version of the same series. No Maple
+  installation on this machine, so reviewed but not machine-tested.
+- `ports/khinchin.wl` — Mathematica. Packages the built-in `N[Khinchin, d]`
+  exactly as the OEIS entry's program does: with no local Mathematica to
+  benchmark against, there is no evidence a hand-rolled series would beat
+  the built-in.
+
 ## Known mathematical approaches (all ~quadratic)
 
 Every published way to compute Khinchin's constant to high precision reduces

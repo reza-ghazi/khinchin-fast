@@ -217,12 +217,17 @@ q_n^(1/n)  ->  e^(pi^2 / (12 ln 2))  =  3.275822918721811...
 - **FLINT/Arb** — `arb_const_khinchin()` implements the same series family
   with rigorous balls; this project's `KHINCHIN_BACKEND=arb` mode is an
   independent implementation in that style, kept as a cross-check oracle.
-- **mpmath** (Python) — `mpmath.khinchin` uses the zeta-series acceleration;
-  fine up to thousands of digits.
+- **mpmath** (Python) — `mpmath.khinchin` uses the plain zeta series with
+  no small-k acceleration (`khinchin_fixed` in `libmp/gammazeta.py`), so it
+  needs ~P/2 full-precision Bernoulli terms; fine up to about a thousand
+  digits. `ports/khinchin.py` in this repository applies the acceleration
+  of 4.3 in the same fixed-point style and is a measured 30–37x faster at
+  1000–2000 digits.
 - **Mathematica** — `Khinchin` is a built-in constant with arbitrary-precision
   evaluation.
-- **PARI/GP** — no built-in as of 2.18; the `README.md` benchmark uses a GP
-  script implementing the same accelerated series (serial and `parvector`
+- **PARI/GP** — no built-in as of 2.18 (the OEIS entry's PARI program was
+  removed in 2010); the `README.md` benchmark uses `ports/khinchin.gp`,
+  which implements the same accelerated series (serial and `parvector`
   parallel). This program is 21–56x faster than the parallel GP script on the
   same machine, while producing identical digits.
 - **y-cruncher** — does not support Khinchin's constant, because no
