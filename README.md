@@ -144,6 +144,11 @@ seven produce byte-identical output files on this machine.
   and the GIL rules out threads. Installing gmpy2 switches mpmath's
   bignum backend to GMP automatically and is worth a further 3-7x (see
   the table below).
+  The gmpy2 rows in the table below come from a local uv environment
+  (gitignored), reproducible with:
+  `uv venv --python 3.14t .venv-ft && uv pip install --python
+  .venv-ft/bin/python mpmath gmpy2` — free-threaded CPython with
+  mpmath's GMP backend; both Python ports run unchanged on it.
 - `ports/khinchin_mt.py` — two-region variant of the Python port,
   mirroring the C program's split: the direct region (no Bernoulli
   numbers, pure-integer tail sums) fans out to threads while the main
