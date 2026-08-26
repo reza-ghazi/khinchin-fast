@@ -112,8 +112,11 @@ which give back part of the constant-factor speed this program exists to win.
 PARI/GP (2.18.1 development, multithreaded build, 24 threads) has no built-in
 Khinchin constant, so the comparison uses a GP implementation of the same
 accelerated series: a serial version with the incremental power table, and a
-parallel version that splits the zeta range across threads with `parvector`,
-seeding each block's alternating harmonic weight with `psi`. Wall-clock times:
+parallel version that splits the zeta range across threads with `parvector`.
+The script lives at `ports/khinchin.gp`; the `psi`-based block seeding used
+when this table was measured has since been replaced by direct summation
+(~4x faster at 10k digits — current timings are in the by-language table
+below). Wall-clock times as measured:
 
 | Digits after decimal | GP serial | GP parallel (24 threads) | This program | Speedup vs GP parallel |
 |---:|---:|---:|---:|---:|

@@ -234,6 +234,19 @@ q_n^(1/n)  ->  e^(pi^2 / (12 ln 2))  =  3.275822918721811...
   binary-splitting-friendly series is known (custom-formula finite-product
   demos are approximations, not full-precision computations).
 
+Beyond the Python and GP ports mentioned above, this repository's `ports/`
+directory carries the accelerated series of 4.3 in five more systems:
+Julia (threaded `BigFloat`), Rust (`rug` with rayon), Fortran (GNU MPFR
+bound through `ISO_C_BINDING`, OpenMP-parallel), Maple, and Mathematica.
+The Julia, Rust, and Fortran ports obtain the even zeta values from the
+classical positive-term recurrence
+`(n + 1/2) zeta(2n) = sum_{j=1}^{n-1} zeta(2j) zeta(2n-2j)` instead of
+Bernoulli numbers — numerically benign, but `O(M^2)` full-precision
+products, which bounds their speed. Every executable port takes
+`DIGITS [OUTPUT_FILE]`, and all locally testable ones write output files
+byte-identical to the C program's; `README.md` carries the measured
+cross-language speed table.
+
 ## 6. Records
 
 Digit-computation records for `K0` (published, widely cited):
