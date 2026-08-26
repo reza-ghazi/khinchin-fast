@@ -6,8 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Single-file C program (`khinchin_fast.c`) that computes Khinchin's constant to a
 requested number of decimal digits using FLINT/Arb ball arithmetic, OpenMP, and
-GMP/MPFR. There is no test framework, no CI, and no VCS here — the project is
-the one source file plus a Makefile and a reference digit file.
+GMP/MPFR. There is no test framework and no CI — the project is the one source
+file plus a Makefile, reference digit files, and documentation.
+
+Companion documents: `README.md` holds usage, measured benchmark tables (this
+machine, plus a PARI/GP comparison), and the complexity/memory analysis — when
+performance-relevant changes land, re-measure and update its tables rather than
+leaving stale numbers. `mathematical_background.md` explains the underlying
+mathematics and computation history. `khinchin-1m.txt` is a computed 1,000,000-digit
+result (~1 MB; took ~57 minutes and 16.1 GB peak RAM to produce).
 
 ## Build and run
 
