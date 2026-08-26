@@ -197,10 +197,10 @@ seven produce byte-identical output files on this machine.
   taken as an accuracy parameter — two bugs of that family had to be
   found by bisection.)
 - `ports/khinchin_sage.sage` — Sage on `RealBallField` (FLINT/Arb, the
-  same strategy as the Julia/Fortran ports). Written but not testable
-  here: this machine's editable from-source Sage 10.9 cannot rebuild
-  against Fedora 44's planarity 5.0, whose API dropped functions Sage
-  still calls (diagnosis in the file header).
+  same strategy as the Julia/Fortran ports), serial. Verified with Sage
+  10.9: byte-identical at 1000 digits — after first repairing the local
+  Sage build, whose planarity module needed upstream's fix for the
+  planarity 5.0 API break before anything could import.
 - `ports/khinchin.hs` — Haskell on native `Integer` (GMP-backed via
   GHC). Verified with GHC 9.10.3: byte-identical at 1000 digits;
   fastest serial member of the native-bignum family at 10k.
@@ -227,10 +227,9 @@ host language.
 ### Measured speed by language
 
 Same machine as the benchmarks above (24 threads), computing 1,000 and
-10,000 digits after the decimal point; every locally testable port's
-output is byte-identical. Rows are sorted by the 10,000-digit time
-(Sage has no row: this machine's Sage build cannot run — see its
-bullet above):
+10,000 digits after the decimal point; every port's output is
+byte-identical — all sixteen implementations are now verified on this
+machine. Rows are sorted by the 10,000-digit time:
 
 | Implementation | Parallelism | 1,000 digits | 10,000 digits |
 |---|---|---:|---:|
@@ -239,6 +238,7 @@ bullet above):
 | Julia + Arb — `ports/khinchin.jl` | threads | 0.005 s* | 0.72 s |
 | Fortran + Arb — `ports/khinchin.f90` | OpenMP | 0.024 s | 0.74 s |
 | PARI/GP — `ports/khinchin.gp` | parvector | 0.05 s | 2.8 s |
+| Sage — `ports/khinchin_sage.sage`, RealBallField | serial | 0.03 s* | 4.2 s |
 | Python + gmpy2, two-region — `ports/khinchin_mt.py` | threads | 0.03 s | 5.0 s |
 | Python + gmpy2 — `ports/khinchin.py`, GMP backend | serial | 0.05 s | 9.0 s |
 | Mathematica — `ports/khinchin.wl` | serial | 0.12 s | 21.7 s |
@@ -254,7 +254,8 @@ bullet above):
 | Perl — `ports/khinchin.pl`, Math::BigInt/FastCalc | serial | 84 s | not run |
 | mpmath built-in `mp.khinchin` | serial | 4.67 s | not run |
 
-\* in-process, excluding Julia startup; the others are full wall-clock.
+\* in-process, excluding interpreter startup (~0.2 s for Julia, ~3.5 s
+for Sage); the others are full wall-clock.
 
 The ranking tracks the zeta strategy, not the language. The C program
 still leads — dropping per-term precision and a rigorously certified

@@ -12,13 +12,11 @@
 # program's KHINCHIN_BACKEND=arb backend) and the whole loop is rigorous
 # ball arithmetic until the final midpoint extraction.  Serial.
 #
-# NOTE: not machine-tested. This machine's Sage 10.9 is an editable
-# from-source build whose import triggers a meson rebuild, and that
-# rebuild fails: Fedora 44 ships planarity 5.0, which dropped API
-# functions (gp_InitGraph, ...) that Sage 10.9's graphs/planarity module
-# still calls, so the whole editable wheel cannot rebuild. Fixes:
-# downgrade planarity, upgrade Sage to a release supporting planarity 5,
-# or use a binary SageMath distribution.
+# Tested with Sage 10.9: byte-identical output to the C program at 1000
+# digits, digit-exact at 10,000 (4.2 s compute, serial; sage startup
+# adds ~3.5 s of wall time). Testing required repairing the machine's
+# editable Sage build first - its planarity module was grafted from
+# upstream to survive Fedora 44's planarity 5.0 API break.
 #
 # Usage:  sage khinchin_sage.sage DIGITS [OUTPUT_FILE]   (default 100)
 # With OUTPUT_FILE the decimal value plus a newline is written there
