@@ -62,13 +62,16 @@ Intel Core Ultra 9 275HX, 24 threads, FLINT 3.4.0, August 25, 2026:
 | 50,000 | 2.67 s | 2.09 s | 7.89 s | 34.61 s | 140 MB |
 | 100,000 | 12.09 s | 8.58 s | 37.40 s | not run | 342 MB |
 | 200,000 | 55.75 s | 49.2 s | 170.82 s | not run | 937 MB |
-| 1,000,000 | 3413.29 s | pending | not run | not run | 16.1 GB |
+| 1,000,000 | 3413.29 s | 3371.28 s | not run | not run | 16.1 GB |
 
 The "+ tuned libraries" column is the same binary preloading the
 CPU-tuned GMP/FLINT pair described in the tuned-libraries subsection
 below (best of repeated same-day runs; same-day stock re-runs of
 0.15/0.45/1.00/2.94/12.9 s confirm the gains are real and grow with
-size rather than machine drift).
+size rather than machine drift) — up to 100k digits. At one million
+digits the tuned gain collapses to 1.2%: that regime is memory-bound
+(see the memory section), and faster multiply kernels cannot speed up
+waiting for DRAM.
 
 A log-log fit to the 10k-200k measurements is `time = O(digits^2.01)`, close
 to the theoretical quadratic behaviour of the series. Beyond 200k the local
@@ -375,8 +378,10 @@ identical):
 | 50,000 | 3.19 s | 2.30 s | 1.38x |
 | 100,000 | 12.96 s | 8.58 s | 1.51x |
 
-The gain grows with size and would put the million-digit run near ~38
-minutes. The tuned pair lives in `~/opt/tuned-mathlibs/`; opt in with
+The gain grows with operand size while the working set fits cache —
+then collapses to 1.2% at one million digits (measured: 3371 vs 3413
+s), where the run is memory-bound and arithmetic speed no longer
+matters. The tuned pair lives in `~/opt/tuned-mathlibs/`; opt in with
 
 ```sh
 LD_PRELOAD="$HOME/opt/tuned-mathlibs/libgmp.so.10 $HOME/opt/tuned-mathlibs/libflint.so.22" ./khinchin-fast ...
