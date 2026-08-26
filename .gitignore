@@ -5,3 +5,4 @@ __pycache__/
 .vscode/
 .ruff_cache/
 ports/khinchin-rs/target/
+*.mod
