@@ -138,9 +138,12 @@ seven produce byte-identical output files on this machine.
 - `ports/khinchin.py` — fixed-point port on top of mpmath's internals.
   Measured 30x (1000 digits) to 37x (2000 digits) faster than mpmath's
   built-in `mp.khinchin` (the program on the OEIS entry), which uses the
-  unaccelerated series. Deliberately serial: the GIL rules out threads for
-  bignum work, and multiprocessing would duplicate the sequential
-  Bernoulli recurrence in every worker instead of dividing it.
+  unaccelerated series. Deliberately serial: profiling shows 84% of the
+  runtime inside mpmath's `mpf_bernoulli`, a strictly sequential cached
+  recurrence, capping any multiprocess split at ~1.2x before IPC costs —
+  and the GIL rules out threads. Installing gmpy2 switches mpmath's
+  bignum backend to GMP automatically and is worth a further 3-7x (see
+  the table below).
 - `ports/khinchin.gp` — the serial and parallel (`parvector`) PARI/GP
   scripts behind the comparison table above. Each parallel block seeds its
   alternating-harmonic weight `h(first)` by direct summation, which
@@ -186,6 +189,7 @@ Same machine as the benchmarks above (24 threads), computing 1,000 and
 | Fortran + MPFR — `ports/khinchin.f90` | OpenMP | 0.05 s | 12.3 s |
 | Julia — `ports/khinchin.jl` | threads | 0.22 s | 19.2 s |
 | Python — `ports/khinchin.py` | serial | 0.16 s | 64.5 s |
+| Python + gmpy2 — same file, GMP backend | serial | 0.05 s | 9.0 s |
 | Mathematica — `ports/khinchin.wl` | serial | 0.12 s | 21.7 s |
 | Maple — `ports/khinchin.mpl` | serial | 8.5 s | 298 s |
 | mpmath built-in `mp.khinchin` | serial | 4.67 s | not run |
@@ -196,8 +200,9 @@ implementation with per-term dropping precision, the two-region split,
 and FLINT's reverse Bernoulli iterator. PARI/GP places second because its
 `zeta(2n)` rides PARI's fast Bernoulli machinery, while the
 Julia/Rust/Fortran ports pay the `O(M^2)` zeta recurrence, Python adds
-mpmath's pure-Python bignum layer on a serial design, and Maple pays its
-software-float `evalf` layer serially. Mathematica's symbolic `Zeta[2n]`
+mpmath's pure-Python bignum layer on a serial design (with gmpy2's GMP
+backend the identical file jumps ahead of the Rust and Fortran ports),
+and Maple pays its software-float `evalf` layer serially. Mathematica's symbolic `Zeta[2n]`
 (exact Bernoulli rationals) places its port between Julia and Python
 despite being serial — and 23x ahead of its own built-in at 10k digits.
 Julia's time excludes JIT warmup.

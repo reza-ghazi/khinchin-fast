@@ -20,6 +20,12 @@ to first evaluation in a fresh process:
       1000        4.67 s       0.16 s        30x
       2000       36.2  s       0.98 s        37x
 
+Installing gmpy2 makes mpmath switch its bignum backend to GMP
+automatically, which speeds this file up a further 3-7x (measured with
+CPython 3.14t + mpmath 1.4.1 + gmpy2 2.3.1: 0.048 s at 1000 digits,
+0.258 s at 2000, 9.0 s at 10000); the timings above are the pure-Python
+backend.
+
 Unlike the C program this is float-guarded, not interval-certified: the
 guard bits make the result reliable in practice, but only khinchin-fast
 proves its digits.
