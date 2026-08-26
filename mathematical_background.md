@@ -37,10 +37,14 @@ The exceptional (measure-zero) set contains many familiar numbers:
   forces the geometric mean of its partial quotients to infinity along a
   different growth law.
 
-Whether specific constants such as `pi`, `zeta(3)`, or `K0` itself satisfy the
-theorem is unknown; numerical evidence for `pi` (and, self-referentially, for
-`K0`) is consistent with typicality, but no proof exists for any explicit
-"natural" constant.
+Whether specific constants satisfy the theorem is unknown. Numerical evidence
+is consistent with typicality for `pi`, `ln 2`, `ln 3`, the Euler–Mascheroni
+constant `gamma`, Apéry's constant `zeta(3)`, the Feigenbaum constants, and —
+self-referentially — `K0` itself (which would in particular make `K0`
+irrational), but no proof exists for any of them. Numbers *constructed* to
+satisfy the theorem are known (Wieting's "Khinchin sequence", 2008), so the
+property is provably realizable; the open problem is establishing it for any
+naturally occurring constant.
 
 ## 2. Mathematical basis: the Gauss map and its invariant measure
 
@@ -195,14 +199,45 @@ Khinchin's theorem generalizes to Hölder means of order `p < 1`:
 K_p = ( sum_{k>=1} k^p * P(a = k) )^(1/p)     for almost every x,
 ```
 
-with `K_0` (the limit `p -> 0`) the geometric mean above. The harmonic-mean
-case is `K_{-1} = 1.74540566...`. A closely related result is the
+with `K_0` (the limit `p -> 0`) the geometric mean above. The weights are the
+Gauss–Kuzmin probabilities, so explicitly
+
+```
+K_p = ( sum_{k>=1} -k^p * log2( 1 - 1/(k+1)^2 ) )^(1/p),
+```
+
+finite exactly when `p < 1`: the harmonic-mean case is
+`K_{-1} = 1.74540566240...`, while the arithmetic mean (`p = 1`) diverges
+almost everywhere, as section 2 noted. A closely related result is the
 **Lévy (Khinchin–Lévy) constant**: the denominators `q_n` of the convergents
 of almost every `x` satisfy
 
 ```
 q_n^(1/n)  ->  e^(pi^2 / (12 ln 2))  =  3.275822918721811...
 ```
+
+### 4.5 Dilogarithm and integral forms
+
+The Wikipedia article collects further closed forms. Two of them, both
+re-verified numerically to 40 digits while preparing this document:
+
+```
+ln(K0/2) = (1/ln 2) * [ Li2(-1/2) + (1/2) sum_{k=2}^{oo} (-1)^k Li2(4/k^2) ]
+```
+
+with `Li2` the dilogarithm (the `k = 2` term contributes
+`Li2(1) = pi^2/6`), and the Gauss-measure integral
+
+```
+Integral_{0}^{1} log2(floor(1/x)) / (1 + x) dx  =  ln K0,
+```
+
+which is just the Birkhoff integral of section 2 restated — its
+`ln`-numerator variant without the `1/ln 2` normalization is OEIS A247038
+`= ln 2 * ln K0` (section 7). Elegant, but neither is computationally
+competitive: the dilogarithm series converges only like `1/k^2`, and the
+integrand jumps at every `x = 1/k`, which also defeats naive numerical
+quadrature.
 
 ## 5. Implementations
 
@@ -332,3 +367,6 @@ Facts recorded on the entry, cross-checked against this program:
   Khintchine's constant", *Math. Comp.* 14 (1960), 370–371.
 - OEIS Foundation, entries A002210 (decimal expansion), A002211 (continued
   fraction), A247038 (`ln 2 * ln K0`) — `https://oeis.org/A002210`.
+- Wikipedia, "Khinchin's constant" —
+  `https://en.wikipedia.org/wiki/Khinchin%27s_constant` (dilogarithm and
+  integral forms, Hölder-mean formulas, empirical-typicality lists).
