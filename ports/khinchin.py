@@ -24,11 +24,26 @@ Unlike the C program this is float-guarded, not interval-certified: the
 guard bits make the result reliable in practice, but only khinchin-fast
 proves its digits.
 
-Usage:  python3 khinchin.py [digits]        (default 100)
+This port is deliberately serial.  CPython's GIL rules out threads for
+CPU-bound bignum work, and multiprocessing does not pay either: the
+dominant cost is mpmath's sequential Bernoulli recurrence, which every
+worker would have to repeat for its own block, so splitting the n-range
+duplicates rather than divides the work.
+
+Usage:  python3 khinchin.py DIGITS [OUTPUT_FILE]        (default 100)
+
+With OUTPUT_FILE the decimal value plus a newline is written there (the
+same contract as ../khinchin_fast.c); otherwise it prints to stdout.
 """
 
 import math
 import sys
+
+# mpmath's pure-Python backend converts huge ints to decimal strings
+# internally; lift CPython's 4300-digit int/str safety limit or runs
+# beyond ~1300 digits raise ValueError.
+if hasattr(sys, "set_int_max_str_digits"):
+    sys.set_int_max_str_digits(0)
 
 from mpmath.libmp import (
     MPZ_ONE,
@@ -101,4 +116,9 @@ def khinchin(digits: int) -> str:
 
 
 if __name__ == "__main__":
-    print(khinchin(int(sys.argv[1]) if len(sys.argv) > 1 else 100))
+    result = khinchin(int(sys.argv[1]) if len(sys.argv) > 1 else 100)
+    if len(sys.argv) > 2:
+        with open(sys.argv[2], "w", encoding="ascii") as output:
+            output.write(result + "\n")
+    else:
+        print(result)

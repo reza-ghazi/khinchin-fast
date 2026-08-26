@@ -18,4 +18,10 @@ KhinchinString[d_Integer?Positive] :=
 (* Digit list, as on the OEIS entry. *)
 KhinchinDigits[d_Integer?Positive] := First @ RealDigits @ N[Khinchin, d + 1]
 
-(* Example: KhinchinString[100] *)
+(* Decimal value plus a newline into a text file, the same contract as
+   ../khinchin_fast.c. *)
+KhinchinToFile[d_Integer?Positive, path_String] :=
+  Export[path, KhinchinString[d] <> "\n", "Text"]
+
+(* Examples: KhinchinString[100]
+             KhinchinToFile[1000, "khinchin-wl-1k.txt"] *)

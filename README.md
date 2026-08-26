@@ -127,32 +127,67 @@ different bignum stack above GMP).
 
 ## Reference ports in other languages
 
-`ports/` holds single-file implementations of the same accelerated series for
-other systems:
+`ports/` holds implementations of the same accelerated series for other
+systems. Every executable port takes `DIGITS [OUTPUT_FILE]` and, given a
+file, writes the same decimal-plus-newline payload as the C program — all
+locally testable ports produce byte-identical output files.
 
 - `ports/khinchin.py` — fixed-point port on top of mpmath's internals.
   Measured 30x (1000 digits) to 37x (2000 digits) faster than mpmath's
   built-in `mp.khinchin` (the program on the OEIS entry), which uses the
-  unaccelerated series; output verified against this repo's digit files.
+  unaccelerated series. Deliberately serial: the GIL rules out threads for
+  bignum work, and multiprocessing would duplicate the sequential
+  Bernoulli recurrence in every worker instead of dividing it.
 - `ports/khinchin.gp` — the serial and parallel (`parvector`) PARI/GP
-  scripts behind the comparison table above; both verified to 1000 digits.
-- `ports/khinchin.jl` — Julia on stock `BigFloat` (MPFR), no packages.
-  The even zeta values come from the classical positive-term recurrence
-  `(n + 1/2) zeta(2n) = sum_{j} zeta(2j) zeta(2n-2j)` (numerically benign:
-  all terms positive), so no Bernoulli numbers or external zeta is needed.
-  Verified to 1000 digits.
-- `ports/khinchin-rs/` — Rust on `rug` (GMP/MPFR), same zeta recurrence.
-  Verified to 1000 digits (~0.2 s); `cargo run --release -- 1000`.
-- `ports/khinchin.f90` — Fortran in IEEE quadruple precision (REAL128),
-  same zeta recurrence. Standard Fortran has no arbitrary-precision
-  arithmetic, so it prints 30 correctly rounded digits (verified) — an
-  algorithm demonstration, not a digit chase.
+  scripts behind the comparison table above. Each parallel block seeds its
+  alternating-harmonic weight `h(first)` by direct summation, which
+  measured ~4x faster at 10k digits than seeding with `psi`.
+- `ports/khinchin.jl` — Julia on stock `BigFloat` (MPFR), no packages,
+  multithreaded (run with `julia -t auto`): 6.3x over serial at 10k
+  digits.
+- `ports/khinchin-rs/` — Rust on `rug` (GMP/MPFR) with rayon: 13x over
+  serial at 10k digits. `cargo run --release -- 1000 out.txt`.
+- `ports/khinchin.f90` — Fortran bound directly to GNU MPFR through
+  standard `ISO_C_BINDING` (Fortran itself has no arbitrary-precision
+  arithmetic), OpenMP-parallel: 9.1x over serial at 10k digits.
 - `ports/khinchin.mpl` — Maple version of the same series. No Maple
   installation on this machine, so reviewed but not machine-tested.
 - `ports/khinchin.wl` — Mathematica. Packages the built-in `N[Khinchin, d]`
   exactly as the OEIS entry's program does: with no local Mathematica to
   benchmark against, there is no evidence a hand-rolled series would beat
   the built-in.
+
+The Julia, Rust, and Fortran ports take their even zeta values from the
+classical positive-term recurrence
+`(n + 1/2) zeta(2n) = sum_j zeta(2j) zeta(2n-2j)` — numerically benign
+(all terms positive, roughly linear error growth) and free of Bernoulli
+numbers, at the price of `O(M^2)` full-precision products, which is what
+dominates their runtimes beyond a few thousand digits. In all of them the
+recurrence convolutions (halved via their `j <-> n-j` symmetry) and the
+blocked main loop run in parallel.
+
+### Measured speed by language
+
+Same machine as the benchmarks above (24 threads), computing 1,000 and
+10,000 digits after the decimal point; all outputs byte-identical:
+
+| Implementation | Parallelism | 1,000 digits | 10,000 digits |
+|---|---|---:|---:|
+| C — `khinchin-fast` (this repo) | OpenMP | 0.007 s | 0.15 s |
+| PARI/GP — `ports/khinchin.gp` | parvector | 0.05 s | 2.8 s |
+| Rust — `ports/khinchin-rs` | rayon | 0.04 s | 9.8 s |
+| Fortran + MPFR — `ports/khinchin.f90` | OpenMP | 0.05 s | 12.3 s |
+| Julia — `ports/khinchin.jl` | threads | 0.22 s | 19.2 s |
+| Python — `ports/khinchin.py` | serial | 0.16 s | 64.5 s |
+| mpmath built-in `mp.khinchin` | serial | 4.67 s | not run |
+
+The C program leads by roughly 20-440x at 10k digits: it is the only
+implementation with per-term dropping precision, the two-region split,
+and FLINT's reverse Bernoulli iterator. PARI/GP places second because its
+`zeta(2n)` rides PARI's fast Bernoulli machinery, while the
+Julia/Rust/Fortran ports pay the `O(M^2)` zeta recurrence and Python adds
+mpmath's pure-Python bignum layer on a serial design. Julia's time
+excludes JIT warmup; Maple and Mathematica are not installed here.
 
 ## Known mathematical approaches (all ~quadratic)
 

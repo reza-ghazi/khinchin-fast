@@ -17,7 +17,11 @@
 # against the tested Python and PARI/GP ports in this directory, but
 # not machine-tested.
 #
-# Usage:  read "khinchin.mpl": khinchin(1000);
+# Usage:  read "khinchin.mpl":
+#         khinchin(1000);
+#         khinchin_to_file(1000, "khinchin-maple-1k.txt");
+# khinchin_to_file stores the decimal value plus a newline, the same
+# contract as ../khinchin_fast.c.
 
 khinchin := proc(d::posint)
     local bits, N, M, S, pw, h, k, n, oldDigits, result;
@@ -37,4 +41,12 @@ khinchin := proc(d::posint)
     result := exp(S / ln(2.0));
     Digits := oldDigits;
     result;
+end proc:
+
+khinchin_to_file := proc(d::posint, path::string)
+    local fd, val;
+    val := khinchin(d);
+    fd := fopen(path, WRITE, TEXT);
+    fprintf(fd, cat("%.", d, "f\n"), val);
+    fclose(fd);
 end proc:

@@ -10,7 +10,8 @@
 \\ PARI has no built-in for this constant (the OEIS entry's PARI program
 \\ was removed in 2010).  khinchin(d) is the serial version;
 \\ khinchin_par(d) splits the zeta range across threads with parvector,
-\\ seeding each block's alternating-harmonic weight with psi.  These are
+\\ each block seeding its alternating-harmonic weight h(first) by direct
+\\ summation (much cheaper than psi at high precision).  These are
 \\ the scripts behind the PARI/GP comparison table in ../README.md
 \\ (21-56x slower than the C program, digit-for-digit identical).
 \\
@@ -18,8 +19,15 @@
 \\         ? \p 1000
 \\         ? khinchin(1000)
 \\         ? khinchin_par(10000)
+\\         ? khinchin_write(10000, "khinchin-gp-10k.txt")
 \\ (set \p to the digits you want displayed; the functions compute at
-\\ d + 20 internally via localprec)
+\\ d + 20 internally via localprec.  khinchin_write stores the decimal
+\\ value plus a newline, the same contract as ../khinchin_fast.c)
+
+\\ parvector threads get their own PARI stacks; the default 8 MB cap
+\\ overflows near 10k digits, so pre-size them and allow growth to 1 GB.
+default(threadsize, max(default(threadsize), 1 << 26));
+default(threadsizemax, max(default(threadsizemax), 1 << 30));
 
 khinchin(d) =
 {
@@ -50,7 +58,7 @@ khinchin_par(d, blocks = 4 * default(nbthreads)) =
   parts = parvector(blocks, b,
     my(first = 1 + (M * (b - 1)) \ blocks,
        last  = (M * b) \ blocks,
-       h  = psi(2. * first) - psi(1. * first),
+       h  = sum(j = 1, 2 * first - 1, (-1)^(j + 1) / (1. * j)),
        pw = vector(N - 2, i, (i + 1)^(-2. * first)),
        s  = 0.);
     for(n = first, last,
@@ -59,4 +67,14 @@ khinchin_par(d, blocks = 4 * default(nbthreads)) =
       pw = vector(N - 2, i, pw[i] / (i + 1)^2));
     s);
   exp((S + vecsum(parts)) / log(2));
+}
+
+khinchin_write(d, path) =
+{
+  my(K  = khinchin_par(d),
+     sc = floor(K * 10^d + 1/2),
+     fr = Strchr(Vecsmall(Str(10^d + sc % 10^d))[2..-1]),
+     f  = fileopen(path, "w"));
+  filewrite(f, Str(sc \ 10^d, ".", fr));
+  fileclose(f);
 }
