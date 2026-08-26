@@ -15,9 +15,9 @@
    zeta(2n-2j) — O(M^2) bignum products.  Guard bits absorb the drift;
    nothing here is interval-certified.
 
-   NOTE: written without an OCaml installation on this machine -
-   reviewed against the tested Node/Go/Java/Ruby/Perl siblings, not
-   machine-tested.
+   Tested with OCaml 5.2.1 (opam) and Zarith 1.14: byte-identical
+   output to the C program at 1000 digits (0.10 s), digit-exact at
+   10,000 (133 s serial).
 
    Build and run:
      ocamlfind ocamlopt -package zarith -linkpkg khinchin.ml -o khinchin-ml

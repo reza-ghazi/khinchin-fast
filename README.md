@@ -201,11 +201,11 @@ seven produce byte-identical output files on this machine.
   here: this machine's editable from-source Sage 10.9 cannot rebuild
   against Fedora 44's planarity 5.0, whose API dropped functions Sage
   still calls (diagnosis in the file header).
-- `ports/khinchin.hs` — Haskell on native `Integer`, which GHC backs
-  with GMP — likely the fastest native-bignum candidate. Reviewed, not
-  machine-tested (no GHC installed).
-- `ports/khinchin.ml` — OCaml on Zarith (GMP-backed). Reviewed, not
-  machine-tested (no OCaml installed).
+- `ports/khinchin.hs` — Haskell on native `Integer` (GMP-backed via
+  GHC). Verified with GHC 9.10.3: byte-identical at 1000 digits;
+  fastest serial member of the native-bignum family at 10k.
+- `ports/khinchin.ml` — OCaml on Zarith (GMP-backed). Verified with
+  OCaml 5.2.1: byte-identical at 1000 digits, within 3% of Haskell.
 - `ports/khinchin.wl` — Mathematica, serial. Implements the accelerated
   series directly (Mathematica evaluates `Zeta[2n]` symbolically through
   Bernoulli numbers), measured 12.7x faster than the built-in `Khinchin`
@@ -229,8 +229,8 @@ host language.
 Same machine as the benchmarks above (24 threads), computing 1,000 and
 10,000 digits after the decimal point; every locally testable port's
 output is byte-identical. Rows are sorted by the 10,000-digit time
-(Haskell, OCaml, and Sage have no rows: no GHC or OCaml is installed,
-and this machine's Sage build cannot run — see the bullets above):
+(Sage has no row: this machine's Sage build cannot run — see its
+bullet above):
 
 | Implementation | Parallelism | 1,000 digits | 10,000 digits |
 |---|---|---:|---:|
@@ -245,6 +245,8 @@ and this machine's Sage build cannot run — see the bullets above):
 | Go — `ports/khinchin.go`, native math/big | goroutines | 0.11 s | 29.2 s |
 | Java — `ports/Khinchin.java`, native BigInteger | parallel streams | 0.77 s | 63.9 s |
 | Python — `ports/khinchin.py`, pure-Python backend | serial | 0.16 s | 64.5 s |
+| Haskell — `ports/khinchin.hs`, native Integer | serial | 0.10 s | 130 s |
+| OCaml — `ports/khinchin.ml`, Zarith | serial | 0.10 s | 133 s |
 | Ruby — `ports/khinchin.rb`, native Integer | serial | 0.28 s | 167 s |
 | Maple — `ports/khinchin.mpl` | serial | 8.5 s | 298 s |
 | Node.js — `ports/khinchin.mjs`, native BigInt | serial | 0.30 s | 306 s |
