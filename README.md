@@ -388,9 +388,30 @@ LD_PRELOAD="$HOME/opt/tuned-mathlibs/libgmp.so.10 $HOME/opt/tuned-mathlibs/libfl
 ```
 
 The tables elsewhere in this README keep the stock-Fedora numbers so
-they stay reproducible on an unmodified system. (The GMP finding
-applies to every GMP consumer on this machine — PARI, yafu, the ports —
-not just this program.)
+they stay reproducible on an unmodified system. But the finding applies
+to every GMP/FLINT consumer on the machine, and a sweep of the ports
+confirms it (10,000 digits, same-day stock -> tuned pairs, all outputs
+digit-verified):
+
+| Port | Stock | Tuned | Gain |
+|---|---:|---:|---:|
+| Rust | 0.40 s | 0.35 s | 1.14x |
+| Julia | 0.67 s | 0.50 s | 1.33x |
+| Fortran | 0.60 s | 0.46 s | 1.30x |
+| PARI/GP | 2.66 s | 2.46 s | 1.08x |
+| Sage | 4.17 s | 3.25 s | 1.28x |
+| Python + gmpy2, two-region | 5.00 s | 4.18 s | 1.20x |
+| Haskell | 50.96 s | 42.59 s | 1.20x |
+| OCaml | 51.70 s | 43.09 s | 1.20x |
+| Ruby | 69.33 s | 60.64 s | 1.14x |
+| Perl + GMP backend | 75.84 s | 66.88 s | 1.13x |
+
+Go, Java, Node.js, Mathematica, Maple, and pure-Python mpmath do not
+link GMP and are unaffected. Two notes: gmpy2 bundles its own GMP
+inside the wheel, but LD_PRELOAD symbol interposition overrides it —
+the 1.20x is real; and Sage accepts the preload cleanly despite its
+vendored library stack. (yafu and any other GMP-heavy tool on this
+machine would see similar gains.)
 
 ## Known mathematical approaches (all ~quadratic)
 
