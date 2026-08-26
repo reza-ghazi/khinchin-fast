@@ -5,6 +5,10 @@ acceleration and an SCP-style reverse Bernoulli iterator implemented with
 FLINT/Arb. FLINT uses GMP for large integer arithmetic and Arb tracks a rigorous
 interval; the program writes a correctly rounded decimal expansion.
 
+The `ports/` directory carries single-file implementations of the same
+accelerated series for Python (30-37x faster than mpmath's built-in),
+PARI/GP, Maple, and Mathematica — see the reference-ports section below.
+
 ## Build
 
 ```sh

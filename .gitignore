@@ -3,3 +3,4 @@ khinchin-fast
 CLAUDE.md
 __pycache__/
 .vscode/
+.ruff_cache/
