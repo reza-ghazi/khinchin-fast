@@ -12,12 +12,14 @@
    formula, logarithms via the atanh(1/q) series, exp by
    argument-halving plus Taylor.  The even zeta values come from the
    positive-term recurrence (n + 1/2) zeta(2n) = sum_j zeta(2j)
-   zeta(2n-2j) — O(M^2) bignum products.  Guard bits absorb the drift;
-   nothing here is interval-certified.
+   zeta(2n-2j) — but only below n_direct, the C program's two-region
+   split: above it each term is a literal tail sum with no zeta values,
+   shortening the O(M^2) recurrence to O(n_direct^2).  Guard bits
+   absorb the drift; nothing here is interval-certified.
 
    Tested with OCaml 5.2.1 (opam) and Zarith 1.14: byte-identical
-   output to the C program at 1000 digits (0.10 s), digit-exact at
-   10,000 (133 s serial).
+   output to the C program at 1000 digits (0.07 s), digit-exact at
+   10,000 (56 s serial).
 
    Build and run:
      ocamlfind ocamlopt -package zarith -linkpkg khinchin.ml -o khinchin-ml
@@ -75,6 +77,14 @@ let khinchin_fixed digits =
       (ceil (float_of_int !wp *. log 2. /. (2. *. log (float_of_int big_n))))
     + 1
   in
+  let n_direct =
+    min
+      (int_of_float
+         (ceil
+            (float_of_int !wp
+            /. (2. *. ((log (float_of_int big_n) /. log 2.) +. 3.)))))
+      (m + 1)
+  in
 
   (* -ln((k-1)/k) ln((k+1)/k) = 4 atanh(1/(2k-1)) atanh(1/(2k+1)). *)
   let s = ref Z.zero in
@@ -92,7 +102,7 @@ let khinchin_fixed digits =
   in
   let z = Array.make (m + 1) Z.zero in
   z.(1) <- Z.div (mul_shift pi pi) (Z.of_int 6);
-  for n = 2 to m do
+  for n = 2 to n_direct - 1 do
     let half = (n - 1) / 2 in
     let raw = ref Z.zero in
     for j = 1 to half do
@@ -109,7 +119,7 @@ let khinchin_fixed digits =
     Array.map (fun k -> Z.div !one (Z.of_int (k * k))) ks
   in
   let h = ref !one in
-  for n = 1 to m do
+  for n = 1 to n_direct - 1 do
     let tail = ref (Z.sub z.(n) !one) in
     Array.iter (fun p -> tail := Z.sub !tail p) powers;
     s :=
@@ -122,6 +132,43 @@ let khinchin_fixed digits =
     Array.iteri
       (fun i k -> powers.(i) <- Z.div powers.(i) (Z.of_int (k * k)))
       ks
+  done;
+
+  (* Direct region (the C program's split): literal tail sums over
+     k in [N, K], no zeta values; h continues ascending, power table
+     re-seeded per block of 32 terms. *)
+  let n = ref n_direct in
+  while !n <= m do
+    let last = min (!n + 31) m in
+    let kk =
+      max big_n
+        (min
+           (int_of_float
+              (2. ** ((float_of_int !wp +. 32.) /. (2. *. float_of_int !n)))
+           + 1)
+           ((16 * big_n) + 64))
+    in
+    let dks = Array.init (kk - big_n + 1) (fun i -> i + big_n) in
+    let pw =
+      Array.map
+        (fun k -> Z.div !one (Z.pow (Z.of_int k) (2 * !n)))
+        dks
+    in
+    for mm = !n to last do
+      let tail = ref Z.zero in
+      Array.iter (fun p -> tail := Z.add !tail p) pw;
+      s :=
+        Z.add !s
+          (Z.shift_right (Z.div (Z.mul !tail !h) (Z.of_int mm)) !wp);
+      h :=
+        Z.sub
+          (Z.add !h (Z.div !one (Z.of_int ((2 * mm) + 1))))
+          (Z.div !one (Z.of_int (2 * mm)));
+      Array.iteri
+        (fun i k -> pw.(i) <- Z.div pw.(i) (Z.of_int (k * k)))
+        dks
+    done;
+    n := last + 1
   done;
 
   let ln2 = Z.mul (Z.of_int 2) (arc_recip 3) in

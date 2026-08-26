@@ -13,8 +13,10 @@
 # fixed-point kit: pi by Machin's formula, logarithms via the atanh(1/q)
 # series, exp by argument-halving plus Taylor. The even zeta values come
 # from the positive-term recurrence (n + 1/2) zeta(2n) = sum_j zeta(2j)
-# zeta(2n-2j) — O(M^2) bignum products, serial (the GVL rules out
-# threads for CPU-bound work). Guard bits absorb the drift; nothing here
+# zeta(2n-2j) — but only below n_direct, the C program's two-region
+# split: above it each term is a literal tail sum with no zeta values,
+# shortening the O(M^2) recurrence to O(n_direct^2). Serial (the GVL
+# rules out threads for CPU-bound work). Guard bits absorb the drift; nothing here
 # is interval-certified.
 #
 # Usage:  ruby khinchin.rb DIGITS [OUTPUT_FILE]        (default 100)
@@ -58,6 +60,7 @@ def khinchin_fixed(digits)
   one = 1 << wp
   n_cut = [3, (wp**0.35).floor].max
   m = (wp * Math.log(2) / (2 * Math.log(n_cut))).ceil + 1
+  n_direct = [(wp / (2 * (Math.log2(n_cut) + 3))).ceil, m + 1].min
 
   # -ln((k-1)/k) ln((k+1)/k) = 4 atanh(1/(2k-1)) atanh(1/(2k+1)).
   s = 0
@@ -71,9 +74,9 @@ def khinchin_fixed(digits)
   # positive-term recurrence (n + 1/2) z_n = sum z_j z_{n-j}.
   pi = 16 * arc_recip(5, one, alternating: true) -
        4 * arc_recip(239, one, alternating: true)
-  z = Array.new(m + 1)
+  z = Array.new(n_direct)
   z[1] = ((pi * pi) >> wp) / 6
-  (2..m).each do |n|
+  (2...n_direct).each do |n|
     half = (n - 1) / 2
     raw = 0
     (1..half).each { |j| raw += z[j] * z[n - j] }
@@ -86,12 +89,32 @@ def khinchin_fixed(digits)
   ks = (2...n_cut).to_a
   powers = ks.map { |k| one / (k * k) }
   h = one
-  (1..m).each do |n|
+  (1...n_direct).each do |n|
     tail = z[n] - one
     powers.each { |p| tail -= p }
     s += (tail * h / n) >> wp
     h += one / (2 * n + 1) - one / (2 * n)
     ks.each_with_index { |k, i| powers[i] /= k * k }
+  end
+
+  # Direct region (the C program's split): literal tail sums over
+  # k in [N, K], no zeta values; h continues ascending, power table
+  # re-seeded per block of 32 terms.
+  n = n_direct
+  while n <= m
+    last = [n + 31, m].min
+    kk = [(2.0**((wp + 32.0) / (2 * n))).floor + 1, 16 * n_cut + 64].min
+    kk = [kk, n_cut].max
+    dks = (n_cut..kk).to_a
+    pw = dks.map { |k| one / (k**(2 * n)) }
+    (n..last).each do |mm|
+      tail = 0
+      pw.each { |p| tail += p }
+      s += (tail * h / mm) >> wp
+      h += one / (2 * mm + 1) - one / (2 * mm)
+      dks.each_with_index { |k, i| pw[i] /= k * k }
+    end
+    n = last + 1
   end
 
   ln2 = 2 * arc_recip(3, one)

@@ -188,10 +188,14 @@ seven produce byte-identical output files on this machine.
   design. None of these languages has bignum transcendentals, so each
   port carries a small fixed-point kit — pi by Machin's formula,
   logarithms via the atanh(1/q) series, exp by argument-halving plus
-  Taylor — and takes zeta(2n) from the positive-term recurrence. Go
-  fans the convolutions out over goroutines and Java over parallel
-  streams; Node, Ruby, and Perl are serial. All five verified
-  byte-identical to the C output at 1000 digits. (Perl's port carries
+  Taylor — and takes zeta(2n) from the positive-term recurrence, but
+  only below `n_direct`: the whole family carries the C program's
+  two-region split, evaluating the large-n terms as literal tail sums
+  with no zeta values at all, which shortens the O(M^2) recurrence and
+  measured 1.9-2.7x across the family. Go fans the convolutions out
+  over goroutines and Java over parallel streams; Node, Ruby, and Perl
+  are serial. All verified byte-identical to the C output at 1000
+  digits. (Perl's port carries
   battle scars: Math::BigInt's bdiv returns (quotient, remainder) in
   list context, and a stray remainder in an argument list is silently
   taken as an accuracy parameter — two bugs of that family had to be
@@ -222,7 +226,10 @@ but `O(M^2)` full-precision products, which capped them at 9.8-19.2 s
 for 10k digits. Binding FLINT instead (history has the old versions)
 bought 15-27x and demonstrated the point the table below makes: the
 ranking is set by the zeta strategy and the bignum library, not by the
-host language.
+host language. A second round proved two more C-program techniques
+portable: dropping precision took the Rust port from 0.63 s to 0.41 s
+at 10k digits, and giving the whole native-bignum family the two-region
+split bought a further 1.9x (Go) to 2.7x (Perl) with no other changes.
 
 ### Measured speed by language
 
@@ -234,24 +241,24 @@ machine. Rows are sorted by the 10,000-digit time:
 | Implementation | Parallelism | 1,000 digits | 10,000 digits |
 |---|---|---:|---:|
 | C — `khinchin-fast` (this repo) | OpenMP | 0.007 s | 0.15 s |
-| Rust + FLINT `bernoulli_rev` — `ports/khinchin-rs` | rayon | 0.025 s | 0.63 s |
+| Rust + FLINT `bernoulli_rev` — `ports/khinchin-rs` | rayon | 0.033 s | 0.41 s |
 | Julia + Arb — `ports/khinchin.jl` | threads | 0.005 s* | 0.72 s |
 | Fortran + Arb — `ports/khinchin.f90` | OpenMP | 0.024 s | 0.74 s |
 | PARI/GP — `ports/khinchin.gp` | parvector | 0.05 s | 2.8 s |
 | Sage — `ports/khinchin_sage.sage`, RealBallField | serial | 0.03 s* | 4.2 s |
 | Python + gmpy2, two-region — `ports/khinchin_mt.py` | threads | 0.03 s | 5.0 s |
 | Python + gmpy2 — `ports/khinchin.py`, GMP backend | serial | 0.05 s | 9.0 s |
+| Go — `ports/khinchin.go`, native math/big | goroutines | 0.08 s | 15.4 s |
 | Mathematica — `ports/khinchin.wl` | serial | 0.12 s | 21.7 s |
-| Go — `ports/khinchin.go`, native math/big | goroutines | 0.11 s | 29.2 s |
-| Java — `ports/Khinchin.java`, native BigInteger | parallel streams | 0.77 s | 63.9 s |
+| Java — `ports/Khinchin.java`, native BigInteger | parallel streams | 0.82 s | 30.8 s |
+| Haskell — `ports/khinchin.hs`, native Integer | serial | 0.07 s | 54.0 s |
+| OCaml — `ports/khinchin.ml`, Zarith | serial | 0.07 s | 55.7 s |
 | Python — `ports/khinchin.py`, pure-Python backend | serial | 0.16 s | 64.5 s |
-| Haskell — `ports/khinchin.hs`, native Integer | serial | 0.10 s | 130 s |
-| OCaml — `ports/khinchin.ml`, Zarith | serial | 0.10 s | 133 s |
-| Ruby — `ports/khinchin.rb`, native Integer | serial | 0.28 s | 167 s |
+| Ruby — `ports/khinchin.rb`, native Integer | serial | 0.19 s | 71.2 s |
+| Node.js — `ports/khinchin.mjs`, native BigInt | serial | 0.24 s | 127 s |
 | Maple — `ports/khinchin.mpl` | serial | 8.5 s | 298 s |
-| Node.js — `ports/khinchin.mjs`, native BigInt | serial | 0.30 s | 306 s |
 | Mathematica built-in `Khinchin` | serial | 0.57 s | 508 s |
-| Perl — `ports/khinchin.pl`, Math::BigInt/FastCalc | serial | 84 s | not run |
+| Perl — `ports/khinchin.pl`, Math::BigInt/FastCalc | serial | 31 s | not run |
 | mpmath built-in `mp.khinchin` | serial | 4.67 s | 11,634 s |
 
 \* in-process, excluding interpreter startup (~0.2 s for Julia, ~3.5 s
@@ -304,7 +311,7 @@ machine, identical output digits:
 | Reverse Bernoulli iterator + direct low-precision tail region | C, this program | 0.15 s |
 | `arb_zeta_ui` per term at full precision | `KHINCHIN_BACKEND=arb`, Julia/Fortran ports | 0.64-0.74 s, and scaling worse (34.6 s vs 2.67 s at 50k) |
 | PARI's Bernoulli machinery | `ports/khinchin.gp` | 2.8 s |
-| Reverse Bernoulli + direct tail (no dropping precision) | Rust port | 0.63 s |
+| Reverse Bernoulli + direct tail + dropping precision | Rust port | 0.41 s |
 | Positive-term recurrence, `O(M^2)` | earlier Julia/Rust/Fortran ports | 10-19 s |
 | Symbolic exact `Zeta[2n]` (Bernoulli rationals) | Mathematica port | 21.7 s |
 

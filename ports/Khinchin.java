@@ -13,9 +13,11 @@
 // pi by Machin's formula, logarithms via the atanh(1/q) series, exp by
 // argument-halving plus Taylor. The even zeta values come from the
 // positive-term recurrence (n + 1/2) zeta(2n) = sum_j zeta(2j)
-// zeta(2n-2j) — O(M^2) bignum products, with the convolutions (halved
-// via their j <-> n-j symmetry) run through parallel streams. Guard
-// bits absorb the drift; nothing here is interval-certified.
+// zeta(2n-2j) — but only below n_direct, the C program's two-region
+// split: above it each term is a literal tail sum with no zeta values,
+// shortening the O(M^2) recurrence to O(n_direct^2). The convolutions
+// (halved via their j <-> n-j symmetry) run through parallel streams.
+// Guard bits absorb the drift; nothing here is interval-certified.
 //
 // Run:  java Khinchin.java DIGITS [OUTPUT_FILE]        (default 100)
 //
@@ -69,6 +71,8 @@ public final class Khinchin {
         one = BigInteger.ONE.shiftLeft(wp);
         int bigN = Math.max(3, (int) Math.pow(wp, 0.35));
         int m = (int) Math.ceil(wp * Math.log(2) / (2 * Math.log(bigN))) + 1;
+        int nDirect = Math.min((int) Math.ceil(
+            wp / (2 * (Math.log(bigN) / Math.log(2) + 3))), m + 1);
 
         // -ln((k-1)/k) ln((k+1)/k) = 4 atanh(1/(2k-1)) atanh(1/(2k+1)).
         BigInteger s = BigInteger.ZERO;
@@ -81,9 +85,9 @@ public final class Khinchin {
         // positive-term recurrence, convolutions via parallel streams.
         BigInteger pi = arcRecip(5, true).shiftLeft(4)
                 .subtract(arcRecip(239, true).shiftLeft(2));
-        BigInteger[] z = new BigInteger[m + 1];
+        BigInteger[] z = new BigInteger[nDirect];
         z[1] = mulShift(pi, pi).divide(BigInteger.valueOf(6));
-        for (int n = 2; n <= m; n++) {
+        for (int n = 2; n < nDirect; n++) {
             int half = (n - 1) / 2;
             final int nn = n;
             BigInteger raw;
@@ -110,7 +114,7 @@ public final class Khinchin {
             powers[k - 2] = one.divide(BigInteger.valueOf((long) k * k));
         }
         BigInteger h = one;
-        for (long n = 1; n <= m; n++) {
+        for (long n = 1; n < nDirect; n++) {
             BigInteger tail = z[(int) n].subtract(one);
             for (BigInteger p : powers) {
                 tail = tail.subtract(p);
@@ -121,6 +125,34 @@ public final class Khinchin {
             for (int k = 2; k < bigN; k++) {
                 powers[k - 2] = powers[k - 2].divide(BigInteger.valueOf((long) k * k));
             }
+        }
+
+        // Direct region (the C program's split): literal tail sums over
+        // k in [N, K], no zeta values; h continues ascending, power
+        // table re-seeded per block of 32 terms.
+        for (int n = nDirect; n <= m; ) {
+            int last = Math.min(n + 31, m);
+            int bigK = Math.min((int) Math.pow(2, (wp + 32.0) / (2.0 * n)) + 1,
+                16 * bigN + 64);
+            bigK = Math.max(bigK, bigN);
+            BigInteger[] pw = new BigInteger[bigK - bigN + 1];
+            for (int k = bigN; k <= bigK; k++) {
+                pw[k - bigN] = one.divide(
+                    BigInteger.valueOf(k).pow(2 * n));
+            }
+            for (long mm = n; mm <= last; mm++) {
+                BigInteger tail = BigInteger.ZERO;
+                for (BigInteger p : pw) {
+                    tail = tail.add(p);
+                }
+                s = s.add(tail.multiply(h).divide(BigInteger.valueOf(mm)).shiftRight(wp));
+                h = h.add(one.divide(BigInteger.valueOf(2 * mm + 1)))
+                     .subtract(one.divide(BigInteger.valueOf(2 * mm)));
+                for (int k = bigN; k <= bigK; k++) {
+                    pw[k - bigN] = pw[k - bigN].divide(BigInteger.valueOf((long) k * k));
+                }
+            }
+            n = last + 1;
         }
 
         BigInteger ln2 = arcRecip(3, false).shiftLeft(1);

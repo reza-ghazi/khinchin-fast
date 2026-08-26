@@ -13,12 +13,14 @@
 -- The port carries its own fixed-point kit: pi by Machin's formula,
 -- logarithms via the atanh(1/q) series, exp by argument-halving plus
 -- Taylor.  The even zeta values come from the positive-term recurrence
--- (n + 1/2) zeta(2n) = sum_j zeta(2j) zeta(2n-2j) — O(M^2) bignum
--- products, computed through a lazily self-referential array.  Guard
--- bits absorb the drift; nothing here is interval-certified.
+-- (n + 1/2) zeta(2n) = sum_j zeta(2j) zeta(2n-2j) — but only below
+-- n_direct, the C program's two-region split: above it each term is a
+-- literal tail sum with no zeta values, shortening the O(M^2)
+-- recurrence (a lazily self-referential array) to O(n_direct^2).
+-- Guard bits absorb the drift; nothing here is interval-certified.
 --
 -- Tested with GHC 9.10.3: byte-identical output to the C program at
--- 1000 digits (0.10 s), digit-exact at 10,000 (130 s serial).
+-- 1000 digits (0.07 s), digit-exact at 10,000 (54 s serial).
 --
 -- Build and run:  ghc -O2 khinchin.hs && ./khinchin DIGITS [OUTPUT_FILE]
 -- With OUTPUT_FILE the decimal value plus a newline is written there
@@ -82,6 +84,10 @@ khinchinFixed digits = (expFixed wp one y, wp)
     one = 1 `shiftL` wp
     bigN = max 3 (floor ((fromIntegral wp :: Double) ** 0.35))
     m = ceiling (fromIntegral wp * log 2 / (2 * log (fromIntegral bigN)) :: Double) + 1
+    nDirect =
+      min
+        (ceiling (fromIntegral wp / (2 * (logBase 2 (fromIntegral bigN) + 3)) :: Double))
+        (m + 1)
 
     -- -ln((k-1)/k) ln((k+1)/k) = 4 atanh(1/(2k-1)) atanh(1/(2k+1)).
     corr =
@@ -93,7 +99,7 @@ khinchinFixed digits = (expFixed wp one y, wp)
         ]
 
     piFixed = 16 * arcRecip True 5 one - 4 * arcRecip True 239 one
-    zs = zetas wp m (((piFixed * piFixed) `shiftR` wp) `div` 6)
+    zs = zetas wp (nDirect - 1) (((piFixed * piFixed) `shiftR` wp) `div` 6)
 
     -- Main accelerated loop, ascending, incremental power table.
     ks = [2 .. toInteger bigN - 1]
@@ -103,8 +109,32 @@ khinchinFixed digits = (expFixed wp one y, wp)
           h' = h + one `div` (2 * toInteger n + 1) - one `div` (2 * toInteger n)
           powers' = [p `div` (k * k) | (p, k) <- zip powers ks]
        in (s', h', powers')
-    (mainSum, _, _) =
-      foldl' step (corr, one, [one `div` (k * k) | k <- ks]) [1 .. m]
+    (bernSum, hAfter, _) =
+      foldl' step (corr, one, [one `div` (k * k) | k <- ks]) [1 .. nDirect - 1]
+
+    -- Direct region (the C program's split): literal tail sums over
+    -- k in [N, K], no zeta values; h continues ascending, power table
+    -- re-seeded per block of 32 terms.
+    directGo s h n
+      | n > m = s
+      | otherwise =
+          let lastN = min (n + 31) m
+              bigK =
+                max bigN $
+                  min
+                    (floor (2 ** ((fromIntegral wp + 32) / (2 * fromIntegral n)) :: Double) + 1)
+                    (16 * bigN + 64)
+              dks = [toInteger bigN .. toInteger bigK]
+              pw0 = [one `div` (k ^ (2 * n)) | k <- dks]
+              inner (s', h', pw) mm =
+                let tail' = sum pw
+                    s'' = s' + ((tail' * h') `div` toInteger mm) `shiftR` wp
+                    h'' = h' + one `div` (2 * toInteger mm + 1) - one `div` (2 * toInteger mm)
+                 in (s'', h'', [p `div` (k * k) | (p, k) <- zip pw dks])
+              (s1, h1, _) = foldl' inner (s, h, pw0) [n .. lastN]
+           in directGo s1 h1 (lastN + 1)
+
+    mainSum = directGo bernSum hAfter nDirect
 
     ln2 = 2 * arcRecip False 3 one
     y = (mainSum `shiftL` wp) `div` ln2

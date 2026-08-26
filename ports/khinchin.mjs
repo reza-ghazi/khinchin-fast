@@ -14,10 +14,12 @@
 // atanh(1/q) series (ln((k±1)/k) = ±2 atanh(1/(2k±1)), ln 2 =
 // 2 atanh(1/3)), and exp by argument-halving plus Taylor. The even
 // zeta values come from the positive-term recurrence
-// (n + 1/2) zeta(2n) = sum_j zeta(2j) zeta(2n-2j), which is O(M^2)
-// bignum products — the same self-contained strategy the early
-// Julia/Rust/Fortran ports used. Guard bits absorb the drift; nothing
-// here is interval-certified.
+// (n + 1/2) zeta(2n) = sum_j zeta(2j) zeta(2n-2j) — but only for
+// n < n_direct, the C program's two-region split: above it each
+// accelerated term IS the tail sum_{k=N..K} k^(-2n) with K <= ~8N,
+// evaluated directly with no zeta values at all, which shortens the
+// O(M^2) recurrence to O(n_direct^2). Guard bits absorb the drift;
+// nothing here is interval-certified.
 //
 // Usage:  node khinchin.mjs DIGITS [OUTPUT_FILE]        (default 100)
 // With OUTPUT_FILE the decimal value plus a newline is written there
@@ -72,7 +74,9 @@ function khinchinFixed(digits) {
   const wp = prec + BigInt(Math.ceil(Math.sqrt(Number(prec)))) + 64n;
   const ONE = 1n << wp;
   const N = Math.max(3, Math.floor(Number(wp) ** 0.35));
+  const log2N = Math.log2(N);
   const M = Math.ceil((Number(wp) * Math.LN2) / (2 * Math.log(N))) + 1;
+  const nDirect = Math.min(Math.ceil(Number(wp) / (2 * (log2N + 3))), M + 1);
 
   // Finite logarithmic correction:
   // -ln((k-1)/k) ln((k+1)/k) = 4 atanh(1/(2k-1)) atanh(1/(2k+1)).
@@ -86,9 +90,9 @@ function khinchinFixed(digits) {
   // pi = 16 atan(1/5) - 4 atan(1/239); zeta(2) = pi^2/6 seeds the
   // positive-term recurrence (n + 1/2) z_n = sum z_j z_{n-j}.
   const pi = 16n * atanRecip(5n, ONE) - 4n * atanRecip(239n, ONE);
-  const z = new Array(M + 1);
+  const z = new Array(nDirect);
   z[1] = ((pi * pi) >> wp) / 6n;
-  for (let n = 2; n <= M; n++) {
+  for (let n = 2; n < nDirect; n++) {
     const half = (n - 1) >> 1;
     let raw = 0n;
     for (let j = 1; j <= half; j++) {
@@ -107,7 +111,7 @@ function khinchinFixed(digits) {
     powers.push(ONE / BigInt(k * k));
   }
   let h = ONE;
-  for (let n = 1; n <= M; n++) {
+  for (let n = 1; n < nDirect; n++) {
     let tail = z[n] - ONE;
     for (const p of powers) {
       tail -= p;
@@ -117,6 +121,32 @@ function khinchinFixed(digits) {
     for (let i = 0, k = 2; k < N; i++, k++) {
       powers[i] /= BigInt(k * k);
     }
+  }
+
+  // Direct region: h continues ascending; the power table over
+  // k in [N, K] is re-seeded per block of 32 terms.
+  let n = nDirect;
+  while (n <= M) {
+    const last = Math.min(n + 31, M);
+    let K = Math.min(
+      Math.floor(2 ** ((Number(wp) + 32) / (2 * n))) + 1, 16 * N + 64);
+    K = Math.max(K, N);
+    const pw = [];
+    for (let k = N; k <= K; k++) {
+      pw.push(ONE / BigInt(k) ** BigInt(2 * n));
+    }
+    for (let m = n; m <= last; m++) {
+      let tail = 0n;
+      for (const p of pw) {
+        tail += p;
+      }
+      s += (tail * h) / BigInt(m) >> wp;
+      h += ONE / BigInt(2 * m + 1) - ONE / BigInt(2 * m);
+      for (let i = 0, k = N; k <= K; i++, k++) {
+        pw[i] /= BigInt(k * k);
+      }
+    }
+    n = last + 1;
   }
 
   const ln2 = 2n * atanhRecip(3n, ONE);

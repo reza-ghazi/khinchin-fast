@@ -15,8 +15,10 @@
 # fixed-point kit: pi by Machin's formula, logarithms via the atanh(1/q)
 # series, exp by argument-halving plus Taylor; even zeta values come
 # from the positive-term recurrence (n + 1/2) zeta(2n) = sum_j zeta(2j)
-# zeta(2n-2j).  Guard bits absorb the drift; nothing here is
-# interval-certified.
+# zeta(2n-2j) - but only below n_direct, the C program's two-region
+# split: above it each term is a literal tail sum with no zeta values,
+# shortening the O(M^2) recurrence to O(n_direct^2).  Guard bits absorb
+# the drift; nothing here is interval-certified.
 #
 # Usage:  perl khinchin.pl DIGITS [OUTPUT_FILE]        (default 100)
 # With OUTPUT_FILE the decimal value plus a newline is written there
@@ -65,6 +67,8 @@ sub khinchin_fixed {
     $one = Math::BigInt->new(1)->blsft($wp);
     my $N = 3 > floor($wp**0.35) ? 3 : floor($wp**0.35);
     my $M = ceil($wp * log(2) / (2 * log($N))) + 1;
+    my $nd = ceil($wp / (2 * (log($N) / log(2) + 3)));
+    $nd = $M + 1 if $nd > $M + 1;
 
     # -ln((k-1)/k) ln((k+1)/k) = 4 atanh(1/(2k-1)) atanh(1/(2k+1)).
     # NOTE: never call b* mutators inside argument lists - several of
@@ -83,7 +87,7 @@ sub khinchin_fixed {
     my $pi = arc_recip(5, 1)->bmul(16)->bsub(arc_recip(239, 1)->bmul(4));
     my @z;
     $z[1] = $pi->copy->bmul($pi)->brsft($wp)->bdiv(6);
-    for my $n (2 .. $M) {
+    for my $n (2 .. $nd - 1) {
         my $half = int(($n - 1) / 2);
         my $raw  = Math::BigInt->new(0);
         for my $j (1 .. $half) {
@@ -105,7 +109,7 @@ sub khinchin_fixed {
     # returns (quotient, remainder) and would double the array.
     my @powers = map { scalar $one->copy->bdiv($_ * $_) } @ks;
     my $h      = $one->copy;
-    for my $n (1 .. $M) {
+    for my $n (1 .. $nd - 1) {
         my $tail = $z[$n]->copy->bsub($one);
         $tail->bsub($_) for @powers;
         $tail->bmul($h)->bdiv($n)->brsft($wp);
@@ -114,6 +118,35 @@ sub khinchin_fixed {
         my $minus = $one->copy->bdiv(2 * $n);
         $h->badd($plus)->bsub($minus);
         $powers[$_]->bdiv($ks[$_] * $ks[$_]) for 0 .. $#ks;
+    }
+
+    # Direct region (the C program's split): literal tail sums over
+    # k in [N, K], no zeta values; h continues ascending, power table
+    # re-seeded per block of 32 terms.
+    my $n = $nd;
+    while ($n <= $M) {
+        my $lastn = $n + 31 < $M ? $n + 31 : $M;
+        my $K = floor(2**(($wp + 32) / (2 * $n))) + 1;
+        $K = 16 * $N + 64 if $K > 16 * $N + 64;
+        $K = $N if $K < $N;
+        my @dks = ($N .. $K);
+        my @pw;
+        for my $k (@dks) {
+            my $e = Math::BigInt->new($k)->bpow(2 * $n);
+            my $p = $one->copy->bdiv($e);
+            push @pw, $p;
+        }
+        for my $mm ($n .. $lastn) {
+            my $tail = Math::BigInt->new(0);
+            $tail->badd($_) for @pw;
+            $tail->bmul($h)->bdiv($mm)->brsft($wp);
+            $s->badd($tail);
+            my $plus  = $one->copy->bdiv(2 * $mm + 1);
+            my $minus = $one->copy->bdiv(2 * $mm);
+            $h->badd($plus)->bsub($minus);
+            $pw[$_]->bdiv($dks[$_] * $dks[$_]) for 0 .. $#dks;
+        }
+        $n = $lastn + 1;
     }
 
     my $ln2 = arc_recip(3, 0)->bmul(2);

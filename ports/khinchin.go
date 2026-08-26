@@ -13,9 +13,11 @@
 // Machin's formula, logarithms via the atanh(1/q) series, exp by
 // argument-halving plus Taylor. The even zeta values come from the
 // positive-term recurrence (n + 1/2) zeta(2n) = sum_j zeta(2j)
-// zeta(2n-2j) — O(M^2) bignum products, with the convolutions (halved
-// via their j <-> n-j symmetry) fanned out over goroutines. Guard bits
-// absorb the drift; nothing here is interval-certified.
+// zeta(2n-2j) — but only below n_direct, the C program's two-region
+// split: above it each term is a literal tail sum with no zeta values,
+// shortening the O(M^2) recurrence to O(n_direct^2). The convolutions
+// (halved via their j <-> n-j symmetry) fan out over goroutines. Guard
+// bits absorb the drift; nothing here is interval-certified.
 //
 // Run:  go run khinchin.go DIGITS [OUTPUT_FILE]        (default 100)
 //
@@ -84,6 +86,10 @@ func khinchinFixed(digits int) *big.Int {
 	one = new(big.Int).Lsh(big.NewInt(1), wp)
 	bigN := int(math.Max(3, math.Floor(math.Pow(float64(wp), 0.35))))
 	m := int(math.Ceil(float64(wp)*math.Ln2/(2*math.Log(float64(bigN))))) + 1
+	nDirect := int(math.Ceil(float64(wp) / (2 * (math.Log2(float64(bigN)) + 3))))
+	if nDirect > m+1 {
+		nDirect = m + 1
+	}
 
 	// Finite logarithmic correction:
 	// -ln((k-1)/k) ln((k+1)/k) = 4 atanh(1/(2k-1)) atanh(1/(2k+1)).
@@ -100,9 +106,9 @@ func khinchinFixed(digits int) *big.Int {
 		new(big.Int).Lsh(arcRecip(5, true), 4),
 		new(big.Int).Lsh(arcRecip(239, true), 2))
 	workers := runtime.NumCPU()
-	z := make([]*big.Int, m+1)
+	z := make([]*big.Int, nDirect)
 	z[1] = new(big.Int).Div(mulShift(pi, pi), big.NewInt(6))
-	for n := 2; n <= m; n++ {
+	for n := 2; n < nDirect; n++ {
 		half := (n - 1) / 2
 		raw := new(big.Int)
 		if half >= 64 {
@@ -144,7 +150,7 @@ func khinchinFixed(digits int) *big.Int {
 	}
 	h := new(big.Int).Set(one)
 	tail := new(big.Int)
-	for n := int64(1); n <= int64(m); n++ {
+	for n := int64(1); n < int64(nDirect); n++ {
 		tail.Sub(z[n], one)
 		for _, p := range powers {
 			tail.Sub(tail, p)
@@ -157,6 +163,43 @@ func khinchinFixed(digits int) *big.Int {
 		for i, k := 0, int64(2); k < int64(bigN); i, k = i+1, k+1 {
 			powers[i].Div(powers[i], big.NewInt(k*k))
 		}
+	}
+
+	// Direct region (the C program's split): each term is the literal
+	// tail sum over k in [N, K], no zeta values at all; h continues
+	// ascending and the power table is re-seeded per block of 32 terms.
+	for n := nDirect; n <= m; {
+		last := n + 31
+		if last > m {
+			last = m
+		}
+		bigK := int(math.Pow(2, (float64(wp)+32)/(2*float64(n)))) + 1
+		if bigK > 16*bigN+64 {
+			bigK = 16*bigN + 64
+		}
+		if bigK < bigN {
+			bigK = bigN
+		}
+		pw := make([]*big.Int, 0, bigK-bigN+1)
+		for k := bigN; k <= bigK; k++ {
+			e := new(big.Int).Exp(big.NewInt(int64(k)), big.NewInt(int64(2*n)), nil)
+			pw = append(pw, e.Div(one, e))
+		}
+		for mm := int64(n); mm <= int64(last); mm++ {
+			tail.SetInt64(0)
+			for _, p := range pw {
+				tail.Add(tail, p)
+			}
+			term := new(big.Int).Mul(tail, h)
+			term.Div(term, big.NewInt(mm))
+			s.Add(s, term.Rsh(term, wp))
+			h.Add(h, new(big.Int).Div(one, big.NewInt(2*mm+1)))
+			h.Sub(h, new(big.Int).Div(one, big.NewInt(2*mm)))
+			for i, k := 0, int64(bigN); k <= int64(bigK); i, k = i+1, k+1 {
+				pw[i].Div(pw[i], big.NewInt(k*k))
+			}
+		}
+		n = last + 1
 	}
 
 	ln2 := new(big.Int).Lsh(arcRecip(3, false), 1)

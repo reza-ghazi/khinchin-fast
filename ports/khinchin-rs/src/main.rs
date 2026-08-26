@@ -11,9 +11,14 @@
 //!   as the literal tail sum over k in [N, K], K ~ 2^(wp/2n) <= ~8N —
 //!   no Bernoulli numbers at all.
 //!
-//! Arithmetic is rug (GMP/MPFR) at flat working precision; blocks fan
-//! out over rayon, heaviest first.  Guard bits absorb the rounding
-//! drift; unlike the C program, nothing here is interval-certified.
+//! Arithmetic is rug (GMP/MPFR) with the C program's dropping
+//! precision: a term of magnitude N^(-2n) only needs about
+//! wp - 2n log2(N) accurate bits, and power-table entry k starts at the
+//! precision its final, most demanding use requires
+//! (wp - 2 first log2(k)), so most arithmetic runs far below full
+//! precision.  Blocks fan out over rayon, heaviest first.  Guard bits
+//! absorb the rounding drift; unlike the C program, nothing here is
+//! interval-certified.
 //!
 //! Run:  cargo run --release -- DIGITS [OUTPUT_FILE]     (default 100)
 //!
@@ -32,6 +37,10 @@ extern "C" {
     fn k_rev_alloc(n: c_ulong) -> *mut c_void;
     fn k_rev_next(num: *mut mpz_t, den: *mut mpz_t, p: *mut c_void);
     fn k_rev_free(p: *mut c_void);
+}
+
+fn clamp_prec(bits: f64, wp: u32) -> u32 {
+    bits.max(64.0).min(wp as f64) as u32
 }
 
 /// h(n) = sum_{j=1}^{2n-1} (-1)^(j+1)/j.
@@ -54,8 +63,12 @@ fn bernoulli_block(first: u64, last: u64, big_n: u64, wp: u32) -> Float {
     let iter = unsafe { k_rev_alloc(2 * last as c_ulong) };
     let mut num = Integer::new();
     let mut den = Integer::new();
+    let log2_n = (big_n as f64).log2();
+    let acc_prec = clamp_prec(wp as f64 - 2.0 * first as f64 * log2_n + 64.0, wp);
 
-    // factor = (2 pi)^(2n) / (2 * (2n)!) at n = last, updated downward.
+    // factor = (2 pi)^(2n) / (2 * (2n)!) at n = last, updated downward:
+    // zeta(2n) is near 1, so its reconstruction genuinely needs full
+    // precision even though the term itself does not.
     let pi = Float::with_val(wp, Constant::Pi);
     let tau2 = pi.square() * 4u32; // (2 pi)^2
     let inv_tau2 = Float::with_val(wp, 1u32) / &tau2;
@@ -63,17 +76,30 @@ fn bernoulli_block(first: u64, last: u64, big_n: u64, wp: u32) -> Float {
         / Float::with_val(wp, Integer::from(Integer::factorial(2 * last as u32)))
         / 2u32;
 
+    // Entry k keeps the precision demanded by its final, most demanding
+    // use (the block's lowest n): relative errors persist through the
+    // incremental *k^2 updates.
     let mut powers: Vec<Float> = (2..big_n)
-        .map(|k| Float::with_val(wp, k * k).pow(last as u32).recip())
+        .map(|k| {
+            let pk = clamp_prec(
+                wp as f64 - 2.0 * first as f64 * (k as f64).log2() + 32.0,
+                wp,
+            );
+            Float::with_val(pk, k * k).pow(last as u32).recip()
+        })
         .collect();
-    let mut h = alternating_harmonic(last, wp);
-    let mut s = Float::new(wp);
+    let mut h = alternating_harmonic(last, acc_prec);
+    let mut s = Float::new(acc_prec);
 
     for n in (first..=last).rev() {
         unsafe { k_rev_next(num.as_raw_mut(), den.as_raw_mut(), iter) };
         let mut zeta = Float::with_val(wp, &num) / Float::with_val(wp, &den);
         zeta *= &factor;
-        let mut tail = zeta.abs() - 1u32;
+        let tail_prec = clamp_prec(wp as f64 - 2.0 * n as f64 + 32.0, wp);
+        // Round the RESULT of zeta - 1 (magnitude ~2^-2n) at tail_prec,
+        // not the operand: rounding zeta (~1) first would cost 2n bits.
+        let zeta_abs = zeta.abs();
+        let mut tail = Float::with_val(tail_prec, &zeta_abs - 1u32);
         for p in &powers {
             tail -= p;
         }
@@ -84,7 +110,7 @@ fn bernoulli_block(first: u64, last: u64, big_n: u64, wp: u32) -> Float {
             for (i, k) in (2..big_n).enumerate() {
                 powers[i] *= k * k;
             }
-            h += Float::with_val(wp, 1u32) / ((2 * n - 2) * (2 * n - 1));
+            h += Float::with_val(acc_prec, 1u32) / ((2 * n - 2) * (2 * n - 1));
         }
     }
     unsafe { k_rev_free(iter) };
@@ -97,14 +123,23 @@ fn direct_block(first: u64, last: u64, big_n: u64, wp: u32) -> Float {
     let mut big_k = (2f64.powf((wp as f64 + 32.0) / (2.0 * first as f64)) as u64 + 1)
         .min(16 * big_n + 64);
     big_k = big_k.max(big_n);
+    let log2_n = (big_n as f64).log2();
+    let acc_prec = clamp_prec(wp as f64 - 2.0 * first as f64 * log2_n + 64.0, wp);
     let mut powers: Vec<Float> = (big_n..=big_k)
-        .map(|k| Float::with_val(wp, k * k).pow(last as u32).recip())
+        .map(|k| {
+            let pk = clamp_prec(
+                wp as f64 - 2.0 * first as f64 * (k as f64).log2() + 32.0,
+                wp,
+            );
+            Float::with_val(pk, k * k).pow(last as u32).recip()
+        })
         .collect();
-    let mut h = alternating_harmonic(last, wp);
-    let mut s = Float::new(wp);
+    let mut h = alternating_harmonic(last, acc_prec);
+    let mut s = Float::new(acc_prec);
 
     for n in (first..=last).rev() {
-        let mut tail = Float::new(wp);
+        let sum_prec = clamp_prec(wp as f64 - 2.0 * n as f64 * log2_n + 32.0, wp);
+        let mut tail = Float::new(sum_prec);
         for p in &powers {
             tail += p;
         }
@@ -113,7 +148,7 @@ fn direct_block(first: u64, last: u64, big_n: u64, wp: u32) -> Float {
             for (i, k) in (big_n..=big_k).enumerate() {
                 powers[i] *= k * k;
             }
-            h += Float::with_val(wp, 1u32) / ((2 * n - 2) * (2 * n - 1));
+            h += Float::with_val(acc_prec, 1u32) / ((2 * n - 2) * (2 * n - 1));
         }
     }
     s
