@@ -23,4 +23,7 @@ here): `khinchin.py` and `khinchin_mt.py` build on mpmath (BSD 3-clause);
 Rust crates rug (LGPL v3+), rayon (MIT/Apache-2.0), and cc (MIT/Apache-2.0),
 and links FLINT (LGPL v3+) for its reverse Bernoulli iterator;
 `khinchin.f90` and `khinchin.jl` bind FLINT/Arb and GNU MPFR (both
-LGPL v3+).
+LGPL v3+); `khinchin_sage.sage` runs under SageMath (GPL v2+);
+`khinchin.ml` depends on Zarith (LGPL v2 with linking exception); the
+Go, Java, Node.js, Ruby, Perl, and Haskell ports use only their
+languages' standard libraries.

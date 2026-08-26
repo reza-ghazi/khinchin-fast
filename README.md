@@ -6,9 +6,10 @@ FLINT/Arb. FLINT uses GMP for large integer arithmetic and Arb tracks a rigorous
 interval; the program writes a correctly rounded decimal expansion.
 
 The `ports/` directory carries implementations of the same accelerated
-series for Python (30-37x faster than mpmath's built-in), Julia, Rust,
-PARI/GP, Fortran, Maple, and Mathematica — see the reference-ports
-section below.
+series in fifteen more languages — FLINT-backed Rust/Julia/Fortran,
+Python (30-37x faster than mpmath's built-in), PARI/GP, Maple,
+Mathematica, Sage, and native-bignum ports for Go, Java, JavaScript,
+Ruby, Perl, Haskell, and OCaml — see the reference-ports section below.
 
 ## Build
 
@@ -180,6 +181,31 @@ seven produce byte-identical output files on this machine.
 - `ports/khinchin.mpl` — Maple version of the same series, serial.
   Verified with Maple 2024.2: byte-identical output to the C program at
   1000 digits, digit-exact against the reference file at 10,000.
+- `ports/khinchin.go`, `ports/Khinchin.java`, `ports/khinchin.mjs`,
+  `ports/khinchin.rb`, `ports/khinchin.pl` — the "native bignum" family:
+  fixed-point integers on each language's own arbitrary-precision type
+  (math/big, BigInteger, BigInt, Integer, Math::BigInt), sharing one
+  design. None of these languages has bignum transcendentals, so each
+  port carries a small fixed-point kit — pi by Machin's formula,
+  logarithms via the atanh(1/q) series, exp by argument-halving plus
+  Taylor — and takes zeta(2n) from the positive-term recurrence. Go
+  fans the convolutions out over goroutines and Java over parallel
+  streams; Node, Ruby, and Perl are serial. All five verified
+  byte-identical to the C output at 1000 digits. (Perl's port carries
+  battle scars: Math::BigInt's bdiv returns (quotient, remainder) in
+  list context, and a stray remainder in an argument list is silently
+  taken as an accuracy parameter — two bugs of that family had to be
+  found by bisection.)
+- `ports/khinchin_sage.sage` — Sage on `RealBallField` (FLINT/Arb, the
+  same strategy as the Julia/Fortran ports). Written but not testable
+  here: this machine's editable from-source Sage 10.9 cannot rebuild
+  against Fedora 44's planarity 5.0, whose API dropped functions Sage
+  still calls (diagnosis in the file header).
+- `ports/khinchin.hs` — Haskell on native `Integer`, which GHC backs
+  with GMP — likely the fastest native-bignum candidate. Reviewed, not
+  machine-tested (no GHC installed).
+- `ports/khinchin.ml` — OCaml on Zarith (GMP-backed). Reviewed, not
+  machine-tested (no OCaml installed).
 - `ports/khinchin.wl` — Mathematica, serial. Implements the accelerated
   series directly (Mathematica evaluates `Zeta[2n]` symbolically through
   Bernoulli numbers), measured 12.7x faster than the built-in `Khinchin`
@@ -201,8 +227,10 @@ host language.
 ### Measured speed by language
 
 Same machine as the benchmarks above (24 threads), computing 1,000 and
-10,000 digits after the decimal point; all outputs byte-identical. Rows
-are sorted by the 10,000-digit time:
+10,000 digits after the decimal point; every locally testable port's
+output is byte-identical. Rows are sorted by the 10,000-digit time
+(Haskell, OCaml, and Sage have no rows: no GHC or OCaml is installed,
+and this machine's Sage build cannot run — see the bullets above):
 
 | Implementation | Parallelism | 1,000 digits | 10,000 digits |
 |---|---|---:|---:|
@@ -214,9 +242,14 @@ are sorted by the 10,000-digit time:
 | Python + gmpy2, two-region — `ports/khinchin_mt.py` | threads | 0.03 s | 5.0 s |
 | Python + gmpy2 — `ports/khinchin.py`, GMP backend | serial | 0.05 s | 9.0 s |
 | Mathematica — `ports/khinchin.wl` | serial | 0.12 s | 21.7 s |
+| Go — `ports/khinchin.go`, native math/big | goroutines | 0.11 s | 29.2 s |
+| Java — `ports/Khinchin.java`, native BigInteger | parallel streams | 0.77 s | 63.9 s |
 | Python — `ports/khinchin.py`, pure-Python backend | serial | 0.16 s | 64.5 s |
+| Ruby — `ports/khinchin.rb`, native Integer | serial | 0.28 s | 167 s |
 | Maple — `ports/khinchin.mpl` | serial | 8.5 s | 298 s |
+| Node.js — `ports/khinchin.mjs`, native BigInt | serial | 0.30 s | 306 s |
 | Mathematica built-in `Khinchin` | serial | 0.57 s | 508 s |
+| Perl — `ports/khinchin.pl`, Math::BigInt/FastCalc | serial | 84 s | not run |
 | mpmath built-in `mp.khinchin` | serial | 4.67 s | not run |
 
 \* in-process, excluding Julia startup; the others are full wall-clock.
