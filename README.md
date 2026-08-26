@@ -330,13 +330,19 @@ That layer is why it runs 28x faster than FLINT's own
 `arb_const_khinchin()` and reproduced the 2016 million-digit record
 roughly 300x faster (under an hour against ~12 single-core days).
 
-What remains is constant-factor tuning — and one such factor has been
-measured and banked (next subsection): CPU-tuned builds of GMP and
-FLINT are worth 1.4-1.5x on this machine. Beyond that, candidates like
-batch multimodular Bernoulli generation are speculative. The genuine
-walls are the quadratic exponent, which is a property of the
-mathematics (next section), and the memory growth documented above —
-neither yields to engineering.
+What remains is constant-factor tuning — and the ledger on it is now
+complete. One factor was measured and banked (next subsection):
+CPU-tuned builds of GMP and FLINT are worth 1.4-1.5x on this machine.
+The other named candidate — batch multimodular Bernoulli generation —
+was measured and closed: `bernoulli_fmpq_vec_no_cache` benchmarks
+within 1-2% of the `bernoulli_rev` iterators at representative block
+ranges (top-of-range and mid-range, narrow and wide), so FLINT's two
+Bernoulli engines are interchangeable here and switching buys nothing.
+The genuine walls are the quadratic exponent, which is a property of
+the mathematics (next section) and cannot be engineered away, and the
+memory growth documented above, which yields only to an out-of-core
+redesign that would trade away part of the in-memory speed this
+program exists for — a different program, not an optimization.
 
 ### CPU-tuned libraries: a measured 1.4-1.5x
 
