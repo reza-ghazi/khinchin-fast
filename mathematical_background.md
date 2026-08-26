@@ -227,8 +227,7 @@ q_n^(1/n)  ->  e^(pi^2 / (12 ln 2))  =  3.275822918721811...
   same machine, while producing identical digits.
 - **y-cruncher** — does not support Khinchin's constant, because no
   binary-splitting-friendly series is known (custom-formula finite-product
-  demos, like the one in this directory, are approximations, not
-  full-precision computations).
+  demos are approximations, not full-precision computations).
 
 ## 6. Records
 
