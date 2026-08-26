@@ -39,12 +39,6 @@ same contract as ../khinchin_fast.c); otherwise it prints to stdout.
 import math
 import sys
 
-# mpmath's pure-Python backend converts huge ints to decimal strings
-# internally; lift CPython's 4300-digit int/str safety limit or runs
-# beyond ~1300 digits raise ValueError.
-if hasattr(sys, "set_int_max_str_digits"):
-    sys.set_int_max_str_digits(0)
-
 from mpmath.libmp import (
     MPZ_ONE,
     MPZ_ZERO,
@@ -62,6 +56,12 @@ from mpmath.libmp import (
     to_fixed,
 )
 from mpmath.libmp.gammazeta import ln2_fixed
+
+# mpmath's pure-Python backend converts huge ints to decimal strings
+# internally; lift CPython's 4300-digit int/str safety limit or runs
+# beyond ~1300 digits raise ValueError.
+if hasattr(sys, "set_int_max_str_digits"):
+    sys.set_int_max_str_digits(0)
 
 
 # N, M, ONE, K mirror the naming of ../khinchin_fast.c and the series in
