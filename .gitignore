@@ -2,3 +2,4 @@ khinchin-fast
 *.o
 CLAUDE.md
 __pycache__/
+.vscode/
