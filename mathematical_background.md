@@ -258,8 +258,11 @@ quadrature.
   digits. `ports/khinchin.py` in this repository applies the acceleration
   of 4.3 in the same fixed-point style and is a measured 30–37x faster at
   1000–2000 digits.
-- **Mathematica** — `Khinchin` is a built-in constant with arbitrary-precision
-  evaluation.
+- **Mathematica** — `Khinchin` is a built-in constant with
+  arbitrary-precision evaluation, but a slow one (508 s for 10,000 digits
+  with Mathematica 14.2 on this machine); `ports/khinchin.wl` implements
+  the accelerated series of 4.3 on top of Mathematica's symbolic
+  `Zeta[2n]` and is 12.7–23x faster.
 - **PARI/GP** — no built-in as of 2.18 (the OEIS entry's PARI program was
   removed in 2010); the `README.md` benchmark uses `ports/khinchin.gp`,
   which implements the same accelerated series (serial and `parvector`
@@ -272,7 +275,9 @@ quadrature.
 Beyond the Python and GP ports mentioned above, this repository's `ports/`
 directory carries the accelerated series of 4.3 in five more systems:
 Julia (threaded `BigFloat`), Rust (`rug` with rayon), Fortran (GNU MPFR
-bound through `ISO_C_BINDING`, OpenMP-parallel), Maple, and Mathematica.
+bound through `ISO_C_BINDING`, OpenMP-parallel), Maple, and Mathematica
+(accelerated series over symbolic `Zeta[2n]`, 12.7–23x faster than the
+built-in constant).
 The Julia, Rust, and Fortran ports obtain the even zeta values from the
 classical positive-term recurrence
 `(n + 1/2) zeta(2n) = sum_{j=1}^{n-1} zeta(2j) zeta(2n-2j)` instead of
