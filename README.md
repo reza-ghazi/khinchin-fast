@@ -144,6 +144,14 @@ seven produce byte-identical output files on this machine.
   and the GIL rules out threads. Installing gmpy2 switches mpmath's
   bignum backend to GMP automatically and is worth a further 3-7x (see
   the table below).
+- `ports/khinchin_mt.py` — two-region variant of the Python port,
+  mirroring the C program's split: the direct region (no Bernoulli
+  numbers, pure-integer tail sums) fans out to threads while the main
+  thread runs the shortened sequential Bernoulli region. 1.8x over the
+  serial port at 10k digits (5.0 s on gmpy2, 39.9 s pure-Python) — but
+  measurement attributes nearly all of it to the shorter recurrence, not
+  the threads: one worker takes 4.85 s. Amdahl's law confirmed
+  empirically.
 - `ports/khinchin.gp` — the serial and parallel (`parvector`) PARI/GP
   scripts behind the comparison table above. Each parallel block seeds its
   alternating-harmonic weight `h(first)` by direct summation, which
@@ -190,6 +198,7 @@ Same machine as the benchmarks above (24 threads), computing 1,000 and
 | Julia — `ports/khinchin.jl` | threads | 0.22 s | 19.2 s |
 | Python — `ports/khinchin.py` | serial | 0.16 s | 64.5 s |
 | Python + gmpy2 — same file, GMP backend | serial | 0.05 s | 9.0 s |
+| Python + gmpy2, two-region — `ports/khinchin_mt.py` | threads | 0.03 s | 5.0 s |
 | Mathematica — `ports/khinchin.wl` | serial | 0.12 s | 21.7 s |
 | Maple — `ports/khinchin.mpl` | serial | 8.5 s | 298 s |
 | mpmath built-in `mp.khinchin` | serial | 4.67 s | not run |
