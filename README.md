@@ -46,6 +46,20 @@ the decimal value and a final newline. A conservative memory preflight rejects
 jobs whose estimated peak exceeds 80% of physical RAM (see the memory section
 below for the model and its calibration); `--force` overrides this check.
 
+## Verifying
+
+```sh
+make check
+```
+
+verifies the C program against the 100-digit reference file
+(`khinchin-100.txt`) and cross-checks its two independent backends, then
+runs `check-ports.sh`, which builds and runs every port whose toolchain
+is installed and requires its output files to be byte-identical to the
+C program's at 100 and 1000 digits. `./bench.sh [d1 d2]` regenerates
+the by-language speed table (full wall-clock, one run each — see its
+header for how it differs from the curated table below).
+
 Tuning and diagnostic environment variables for the default backend:
 `KHINCHIN_N` overrides the power-table cut-off, `KHINCHIN_DIRECT` overrides
 the split between the direct and Bernoulli regions, and `KHINCHIN_VERBOSE=1`
@@ -73,6 +87,8 @@ size rather than machine drift) — up to 100k digits. At one million
 digits the tuned gain collapses to 1.2%: that regime is memory-bound
 (see the memory section), and faster multiply kernels cannot speed up
 waiting for DRAM.
+
+![time vs digits, log-log](assets/benchmark.png)
 
 A log-log fit to the 10k-200k measurements is `time = O(digits^2.01)`, close
 to the theoretical quadratic behaviour of the series. Beyond 200k the local

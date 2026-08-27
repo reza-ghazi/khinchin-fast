@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "khinchin-fast"
+type: software
+authors:
+  - family-names: "Ghazi"
+    given-names: "Reza"
+abstract: >-
+  Rigorously certified computation of Khinchin's constant to millions of
+  decimal digits using an accelerated Bailey-Borwein-Crandall zeta
+  series over FLINT/Arb ball arithmetic, with reference ports of the
+  same algorithm in seventeen further languages.
+repository-code: "https://github.com/reza-ghazi/khinchin-fast"
+license: MIT
+keywords:
+  - "Khinchin's constant"
+  - "continued fractions"
+  - "arbitrary precision"
+  - "number theory"
+  - "FLINT"
+version: "1.0"
+date-released: "2026-08-26"
