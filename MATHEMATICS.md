@@ -294,7 +294,8 @@ cross-language speed table.
 
 ## 6. Records
 
-Digit-computation records for `K0` (published, widely cited):
+Digit-computation records for `K0` (published and widely cited, plus this
+project's own):
 
 | Year | Digits | Who / method |
 |---:|---:|---|
@@ -302,9 +303,11 @@ Digit-computation records for `K0` (published, widely cited):
 | 1997 | 7,350 | Bailey, Borwein, Crandall — zeta-series acceleration |
 | 1998 | 110,000 | Gourdon — refined acceleration |
 | 2016 | 1,000,000 | Carles Simó (University of Barcelona) — PARI, ~12 days, single core; announced through OEIS A002210, where a cached copy of the digits is kept with permission |
+| 2026 | 2,000,000 | This project — FLINT/Arb accelerated BBC series, 8 h 47 m wall on a 24-thread Intel Core Ultra 9 275HX, 55.8 GiB peak RAM; result in `khinchin-2m.txt`, first 10^6 digits byte-identical to the 2016 computation |
 
-For perspective, this machine reproduces the 1998 record in about 15 seconds
-and the 2016 million-digit computation in 57 minutes (measured). But because every known
+For perspective, this machine reproduces the 1998 record in about 15 seconds,
+the 2016 million-digit computation in 57 minutes, and doubled it to two
+million digits overnight (all measured). But because every known
 algorithm costs `~d^2/polylog`, each 10x in digits costs ~100x in time:
 million-digit computations are now commodity, while 10^9 digits would take
 decades — versus minutes for `pi`, which has quasi-linear algorithms. The
@@ -332,8 +335,8 @@ Facts recorded on the entry, cross-checked against this program:
 - **Digit provenance**: Harry J. Smith's b-file supplies 1,200 digits; Simon
   Plouffe hosts 1,024-digit and 110,000-digit tables; and Carles Simó's 2016
   computation of 10^6 digits (reported to the OEIS in October 2016) is cached
-  on the entry with permission — the record this program reproduces in under
-  an hour.
+  on the entry with permission — the computation this program reproduces in
+  under an hour (and has since doubled; see the records table above).
 - **Formulas**: the defining product `prod_{k>=1} (1 + 1/(k(k+2)))^(log2 k)`,
   and `K0 = exp(A247038 / log 2)`, where **A247038** is the decimal expansion
   of `Integral_{x=0..1} ln(floor(1/x)) / (1+x) dx = 0.6847247885631571...`.

@@ -78,6 +78,7 @@ Intel Core Ultra 9 275HX, 24 threads, FLINT 3.4.0, August 25, 2026:
 | 100,000 | 12.09 s | 8.58 s | not run | 342 MB |
 | 200,000 | 55.75 s | 49.2 s | not run | 937 MB |
 | 1,000,000 | 3413.29 s | 3371.28 s | not run | 16.1 GB |
+| 2,000,000 | 31644.52 s | not run | not run | 55.8 GB |
 
 The "+ tuned libraries" column is the same binary preloading the
 CPU-tuned GMP/FLINT pair described in the tuned-libraries subsection
@@ -88,19 +89,31 @@ digits the tuned gain collapses to 1.2%: that regime is memory-bound
 (see the memory section), and faster multiply kernels cannot speed up
 waiting for DRAM.
 
+The 2,000,000-digit row (August 27, 2026) is, as far as we can find,
+the largest computation of Khinchin's constant on record — see
+`MATHEMATICS.md`'s records section. It ran with `--force`, since the
+deliberately conservative preflight refuses the job on this 64 GB
+machine; measured peak was 55.8 GiB and the run fit in RAM (a standby
+swapfile went unused). Its first 1,000,000 digits are byte-identical to
+`khinchin-1m.txt`, and the full result is committed as
+`khinchin-2m.txt`.
+
 ![time vs digits, log-log](assets/benchmark.png)
 
 A log-log fit to the 10k-200k measurements is `time = O(digits^2.01)`, close
 to the theoretical quadratic behaviour of the series. Beyond 200k the local
-exponent steepens (about 2.5 between 200k and 1M) as the working set outgrows
+exponent steepens (about 2.5 between 200k and 1M, and 3.2 between 1M and 2M)
+as the working set outgrows
 the caches and the reverse Bernoulli iterators' quadratically growing state
 starts to dominate: one million digits took 56.9 minutes, not the ~24 the
-small-size fit projects. For context, the largest documented computation of
+small-size fit projects, and two million took 8 h 47 m. For context, the
+largest previously documented computation of
 Khinchin's constant was 10^6 digits in about 12 days of single-core PARI
-(University of Barcelona, 2016); this program reproduces it in under an hour.
+(University of Barcelona, 2016); this program reproduces it in under an hour
+and doubles it overnight.
 Extrapolating to one billion digits still gives centuries: the exponent, not
 the constant factor, is the obstruction (see the next sections), and memory
-(16.1 GB peak at 1M, growing superlinearly) walls off the current in-memory
+(55.8 GiB peak at 2M, growing superlinearly) walls off the current in-memory
 design well before time does — see the next section.
 
 ## Memory: the real limitation
@@ -121,14 +134,16 @@ against the program's preflight estimate:
 | 200,000 | 1,439 MiB | 947 MiB |
 | 300,000 | 2,679 MiB | 1,957 MiB |
 | 1,000,000 | 18.7 GiB | ~15.4 GiB |
+| 2,000,000 | 61.7 GiB | 55.8 GiB |
 
 The preflight models both allocations explicitly and is calibrated on the
-measurements above to stay 1.2-1.6x over the actual peak — deliberately
+measurements above to stay 1.1-1.6x over the actual peak — deliberately
 conservative, since its job is to refuse jobs that would exhaust RAM.
-On this 64 GB machine the preflight starts
-refusing around 2 million digits, and the measured growth curve suggests such
-a job would genuinely need ~55 GB: memory, not time, is the first hard wall
-of the current all-in-memory design. Breaking past it would need out-of-core
+On this 64 GB machine the preflight refuses
+2 million digits (estimate above physical RAM), and the `--force` run in the
+benchmark table confirms why the margin is thin: the job genuinely peaked at
+55.8 GiB, within 6 GiB of the machine's total. Memory, not time, is the first
+hard wall of the current all-in-memory design. Breaking past it would need out-of-core
 Bernoulli generation or slice-wise recomputation of the zeta tails — both of
 which give back part of the constant-factor speed this program exists to win.
 
