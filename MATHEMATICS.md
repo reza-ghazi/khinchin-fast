@@ -273,15 +273,16 @@ quadrature.
   demos are approximations, not full-precision computations).
 
 Beyond the Python and GP ports mentioned above, this repository's
-`ports/` directory carries the accelerated series of 4.3 in thirteen
-more systems — with the C program, sixteen implementations across
-fifteen languages, every one verified byte-identical on this machine.
-Julia, Fortran, and Sage bind FLINT/Arb (`arb_zeta_ui` per term); Rust
-mirrors the C program's own structure (FLINT's reverse Bernoulli
-iterator plus the direct-tail region); Mathematica rides its symbolic
-`Zeta[2n]` (12.7–23x faster than the built-in constant); Maple runs on
-its `evalf` layer; and a native-bignum family — Go, Java, JavaScript,
-Ruby, Perl, Haskell, OCaml — computes in fixed-point integers with a
+`ports/` directory carries the accelerated series of 4.3 in fifteen
+more systems — with the C program, eighteen implementations across
+seventeen languages, every one verified byte-identical on this machine.
+Julia, Fortran, and Sage bind FLINT/Arb (`arb_zeta_ui` per term); C++
+and Rust mirror the C program's own structure (FLINT's reverse
+Bernoulli iterator plus the direct-tail region, with dropping
+precision); Mathematica rides its symbolic `Zeta[2n]` (12.7–23x faster
+than the built-in constant); Maple runs on its `evalf` layer; and a
+native-bignum family — Go, Java, C#, JavaScript, Ruby, Perl, Haskell,
+OCaml — computes in fixed-point integers with a
 port-local kit (Machin pi, atanh-series logarithms, halve-and-square
 exp), taking the even zeta values from the classical positive-term
 recurrence `(n + 1/2) zeta(2n) = sum_{j=1}^{n-1} zeta(2j) zeta(2n-2j)`

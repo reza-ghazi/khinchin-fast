@@ -10,3 +10,5 @@ ports/khinchin-rs/target/
 *.cmi
 *.cmx
 *.sage.py
+ports/khinchin-cs/bin/
+ports/khinchin-cs/obj/

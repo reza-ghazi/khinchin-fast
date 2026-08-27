@@ -25,5 +25,6 @@ and links FLINT (LGPL v3+) for its reverse Bernoulli iterator;
 `khinchin.f90` and `khinchin.jl` bind FLINT/Arb and GNU MPFR (both
 LGPL v3+); `khinchin_sage.sage` runs under SageMath (GPL v2+);
 `khinchin.ml` depends on Zarith (LGPL v2 with linking exception); the
-Go, Java, Node.js, Ruby, Perl, and Haskell ports use only their
-languages' standard libraries.
+Go, Java, C#, Node.js, Ruby, Perl, and Haskell ports use only their
+languages' standard libraries, and `khinchin.cpp` links FLINT/Arb,
+MPFR, and GMP like the C program.

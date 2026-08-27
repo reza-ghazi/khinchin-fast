@@ -6,10 +6,11 @@ FLINT/Arb. FLINT uses GMP for large integer arithmetic and Arb tracks a rigorous
 interval; the program writes a correctly rounded decimal expansion.
 
 The `ports/` directory carries implementations of the same accelerated
-series in fifteen more languages — FLINT-backed Rust/Julia/Fortran,
-Python (30-37x faster than mpmath's built-in), PARI/GP, Maple,
-Mathematica, Sage, and native-bignum ports for Go, Java, JavaScript,
-Ruby, Perl, Haskell, and OCaml — see the reference-ports section below.
+series in seventeen more languages — FLINT-backed C++, Rust, Julia, and
+Fortran, Python (30-37x faster than mpmath's built-in), PARI/GP, Maple,
+Mathematica, Sage, and native-bignum ports for Go, Java, C#,
+JavaScript, Ruby, Perl, Haskell, and OCaml — see the reference-ports
+section below.
 
 ## Build
 
@@ -176,6 +177,11 @@ seven produce byte-identical output files on this machine.
   term, blocked across Julia threads (`julia -t auto`). Only Arb's
   pointer-based API is used, so no C struct layouts are declared. 27x
   faster than the previous BigFloat/recurrence version.
+- `ports/khinchin.cpp` — C++17 mirroring the C program most closely of
+  any port: FLINT's `bernoulli_rev` used natively (no FFI shim), the
+  two-region split, and full dropping precision, over an RAII Arb
+  wrapper with std::thread blocks. 0.26 s at 10k digits — the fastest
+  port, within 1.8x of the C program.
 - `ports/khinchin-rs/` — Rust with the C program's own two-region split:
   FLINT's reverse Bernoulli iterator (`bernoulli_rev`, reached through a
   30-line C shim built by `build.rs`, since its struct layout is not
@@ -190,10 +196,11 @@ seven produce byte-identical output files on this machine.
 - `ports/khinchin.mpl` — Maple version of the same series, serial.
   Verified with Maple 2024.2: byte-identical output to the C program at
   1000 digits, digit-exact against the reference file at 10,000.
-- `ports/khinchin.go`, `ports/Khinchin.java`, `ports/khinchin.mjs`,
-  `ports/khinchin.rb`, `ports/khinchin.pl` — the "native bignum" family:
-  fixed-point integers on each language's own arbitrary-precision type
-  (math/big, BigInteger, BigInt, Integer, Math::BigInt), sharing one
+- `ports/khinchin.go`, `ports/Khinchin.java`, `ports/khinchin-cs/`,
+  `ports/khinchin.mjs`, `ports/khinchin.rb`, `ports/khinchin.pl` — the
+  "native bignum" family: fixed-point integers on each language's own
+  arbitrary-precision type (math/big, Java BigInteger, .NET BigInteger,
+  BigInt, Integer, Math::BigInt), sharing one
   design. None of these languages has bignum transcendentals, so each
   port carries a small fixed-point kit — pi by Machin's formula,
   logarithms via the atanh(1/q) series, exp by argument-halving plus
@@ -202,8 +209,8 @@ seven produce byte-identical output files on this machine.
   two-region split, evaluating the large-n terms as literal tail sums
   with no zeta values at all, which shortens the O(M^2) recurrence and
   measured 1.9-2.7x across the family. Go fans the convolutions out
-  over goroutines and Java over parallel streams; Node, Ruby, and Perl
-  are serial. All verified byte-identical to the C output at 1000
+  over goroutines, Java over parallel streams, and C# over
+  Parallel.For; Node, Ruby, and Perl are serial. All verified byte-identical to the C output at 1000
   digits. Perl doubles as a control experiment for the arithmetic
   layer: on the bundled FastCalc backend (schoolbook multiplication) it
   scales like d^3.6 — 31 s at 1000 digits and an extrapolated ~32
@@ -249,12 +256,13 @@ split bought a further 1.9x (Go) to 2.7x (Perl) with no other changes.
 
 Same machine as the benchmarks above (24 threads), computing 1,000 and
 10,000 digits after the decimal point; every port's output is
-byte-identical — all sixteen implementations are now verified on this
+byte-identical — all eighteen implementations are now verified on this
 machine. Rows are sorted by the 10,000-digit time:
 
 | Implementation | Parallelism | 1,000 digits | 10,000 digits |
 |---|---|---:|---:|
 | C — `khinchin-fast` (this repo) | OpenMP | 0.007 s | 0.15 s |
+| C++ + FLINT/Arb — `ports/khinchin.cpp` | std::thread | 0.025 s | 0.26 s |
 | Rust + FLINT `bernoulli_rev` — `ports/khinchin-rs` | rayon | 0.033 s | 0.41 s |
 | Julia + Arb — `ports/khinchin.jl` | threads | 0.005 s* | 0.72 s |
 | Fortran + Arb — `ports/khinchin.f90` | OpenMP | 0.024 s | 0.74 s |
@@ -265,6 +273,7 @@ machine. Rows are sorted by the 10,000-digit time:
 | Go — `ports/khinchin.go`, native math/big | goroutines | 0.08 s | 15.4 s |
 | Mathematica — `ports/khinchin.wl` | serial | 0.12 s | 21.7 s |
 | Java — `ports/Khinchin.java`, native BigInteger | parallel streams | 0.82 s | 30.8 s |
+| C# — `ports/khinchin-cs`, native BigInteger | Parallel.For | 0.20 s | 36.5 s |
 | Haskell — `ports/khinchin.hs`, native Integer | serial | 0.07 s | 54.0 s |
 | OCaml — `ports/khinchin.ml`, Zarith | serial | 0.07 s | 55.7 s |
 | Python — `ports/khinchin.py`, pure-Python backend | serial | 0.16 s | 64.5 s |
