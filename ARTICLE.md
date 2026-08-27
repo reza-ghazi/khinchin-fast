@@ -182,3 +182,6 @@ whole set. The repository is permanently archived at Zenodo:
   1281–1292; FLINT, <https://flintlib.org>.
 - R. Bloemen, `recmo/khinchin`, 2022,
   <https://github.com/recmo/khinchin>.
+- R. Ghazi, *khinchin-fast: Khinchin's constant to 2,000,000 certified
+  decimal digits*, Zenodo, 2026,
+  [doi:10.5281/zenodo.22134905](https://doi.org/10.5281/zenodo.22134905).
