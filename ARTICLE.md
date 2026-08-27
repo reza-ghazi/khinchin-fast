@@ -162,7 +162,8 @@ implementations of the same accelerated series in seventeen further
 languages, from FLINT-backed C++/Rust/Julia/Fortran to pure-bignum
 Go/Java/Haskell/OCaml, every one verified byte-identical to the C
 program's output. A single `make check` rebuilds and re-verifies the
-whole set.
+whole set. The repository is permanently archived at Zenodo:
+[doi:10.5281/zenodo.22134905](https://doi.org/10.5281/zenodo.22134905).
 
 ## References
 

@@ -11,6 +11,7 @@ abstract: >-
   series over FLINT/Arb ball arithmetic, with reference ports of the
   same algorithm in seventeen further languages.
 repository-code: "https://github.com/reza-ghazi/khinchin-fast"
+doi: 10.5281/zenodo.22134905
 license: MIT
 keywords:
   - "Khinchin's constant"
@@ -18,5 +19,5 @@ keywords:
   - "arbitrary precision"
   - "number theory"
   - "FLINT"
-version: "1.1"
+version: "1.1.1"
 date-released: "2026-08-27"
