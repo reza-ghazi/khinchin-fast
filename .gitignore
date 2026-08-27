@@ -12,3 +12,8 @@ ports/khinchin-rs/target/
 *.sage.py
 ports/khinchin-cs/bin/
 ports/khinchin-cs/obj/
+paper/*.aux
+paper/*.out
+paper/*.toc
+paper/khinchin-2m.log
+paper/khinchin-2m.pdf

@@ -1,0 +1,257 @@
+% arXiv-ready preprint. Compile: pdflatex khinchin-2m.tex (twice).
+% Suggested categories: math.NT (primary), cross-list math.NA / cs.MS.
+\documentclass[11pt]{amsart}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newcommand{\Kzero}{K_0}
+
+\title{Khinchin's constant to two million decimal digits}
+\author{Reza Ghazi}
+\email{reza@brightarcadia.com}
+\date{August 27, 2026}
+
+\subjclass[2020]{Primary 11Y60; Secondary 11K50, 65G30}
+\keywords{Khinchin's constant, continued fractions, arbitrary-precision
+arithmetic, interval arithmetic, ball arithmetic, FLINT, Arb}
+
+\begin{document}
+
+\begin{abstract}
+We report a computation of Khinchin's constant
+$\Kzero = 2.68545200106530644530\ldots$ to $2{,}000{,}000$ decimal
+digits, doubling the largest computation previously on record
+($10^6$ digits, Sim\'o, 2016). The computation evaluates an
+accelerated form of the Bailey--Borwein--Crandall zeta series in
+FLINT/Arb ball arithmetic, so every printed digit is certified
+correctly rounded rather than heuristically estimated. It completed in
+8\,h\,47\,m on a single 24-thread desktop machine with a peak of
+55.8\,GiB of memory; the first $10^6$ digits agree digit for digit
+with Sim\'o's independent computation. The software, the digits, and
+the raw run telemetry are open source and permanently archived.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+Write a real number $x$ as a simple continued fraction
+\[
+x = a_0 + \cfrac{1}{a_1 + \cfrac{1}{a_2 + \cfrac{1}{a_3 + \dotsb}}},
+\qquad a_i \in \mathbb{N}.
+\]
+Khinchin \cite{khinchin1935} proved that for almost every real number
+(in the sense of Lebesgue measure) the geometric mean of the partial
+quotients converges to a universal constant independent of $x$:
+\[
+\lim_{n\to\infty} \bigl(a_1 a_2 \cdots a_n\bigr)^{1/n}
+= \Kzero
+= \prod_{k=1}^{\infty} \Bigl(1 + \frac{1}{k(k+2)}\Bigr)^{\log_2 k}
+= 2.685452001\ldots
+\]
+The constant is entry A002210 of the OEIS \cite{oeis}. Despite its
+central place in the metric theory of continued fractions, almost
+nothing is known about $\Kzero$ as a number: it is not known whether it
+is irrational, and it is not known whether its own continued fraction
+expansion satisfies Khinchin's theorem (numerically it appears to).
+
+Unlike $\pi$, for which hypergeometric series with rational terms admit
+binary splitting and hence quasi-linear digit-computation algorithms,
+no such series is known for $\Kzero$. Every practical method expresses
+it through the even zeta values $\zeta(2), \zeta(4), \ldots$ ---
+infinitely many algebraically independent transcendentals, each needed
+essentially to full precision --- and costs $O(d^2)$ up to logarithmic
+factors for $d$ digits. This quadratic wall explains the brevity of the
+record history (Table~\ref{tab:records}).
+
+\begin{table}[ht]
+\caption{Record computations of $\Kzero$.}
+\label{tab:records}
+\begin{tabular}{rrl}
+\toprule
+Year & Digits & Author / method \\
+\midrule
+1959--1960s & tens & Shanks, Wrench, and others \\
+1997 & $7{,}350$ & Bailey, Borwein, Crandall \cite{bbc1997} \\
+1998 & $110{,}000$ & Gourdon \cite{gourdon} \\
+2016 & $1{,}000{,}000$ & Sim\'o \cite{simo2016}, PARI, ${\sim}12$ days, single core \\
+2026 & $2{,}000{,}000$ & this work, 8\,h\,47\,m, one desktop machine \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{The series and its acceleration}
+
+Taking logarithms of the product formula and expanding yields the
+Bailey--Borwein--Crandall series \cite{bbc1997}
+\begin{equation}
+\label{eq:bbc}
+\ln 2 \, \ln \Kzero
+= \sum_{n=1}^{\infty} \frac{\zeta(2n) - 1}{n}\, h(n),
+\qquad
+h(n) = \sum_{j=1}^{2n-1} \frac{(-1)^{j+1}}{j}.
+\end{equation}
+Since $\zeta(2n) - 1 \sim 2^{-2n}$, the series
+\eqref{eq:bbc} converges geometrically but slowly for high precision.
+For a cut-off $N \ge 2$ the acceleration used here rewrites it as
+\begin{equation}
+\label{eq:accel}
+\ln 2 \, \ln \Kzero
+= -\sum_{k=2}^{N-1} \ln\frac{k-1}{k}\,\ln\frac{k+1}{k}
+\;+\;
+\sum_{n=1}^{\infty}
+\frac{1}{n}\Bigl(\zeta(2n) - 1 - \sum_{k=2}^{N-1} k^{-2n}\Bigr) h(n),
+\end{equation}
+whose $n$-th term now has magnitude about $N^{-2n}$, so approximately
+$P / (2\log_2 N)$ terms suffice for $P$ bits of precision. The
+structure of this acceleration follows Bloemen's implementation
+\cite{bloemen2022}.
+
+\section{Implementation}
+
+The program is a single C file over FLINT/Arb ball arithmetic
+\cite{johansson2017} with OpenMP. Beyond the series
+\eqref{eq:accel}, three ideas carry most of the speed.
+
+\subsection*{Dropping precision}
+A term of magnitude $N^{-2n}$ contributes at most
+$P - 2n \log_2 N$ bits to the final sum, so its evaluation --- and the
+power-table entries feeding it --- run far below full precision.
+Almost all arithmetic in the program is low-precision.
+
+\subsection*{A two-region split}
+The bracketed quantity in \eqref{eq:accel} equals the tail
+$\sum_{k \ge N} k^{-2n}$ exactly. For $n$ above roughly
+$P / \bigl(2(\log_2 N + 3)\bigr)$ that tail is summed literally at low
+precision, requiring no Bernoulli numbers at all; a rigorous integral
+bound covers the truncated remainder. Below the split, where
+$\zeta(2n)$ is genuinely near $1$ and needs full precision, FLINT's
+reverse Bernoulli iterator reconstructs it. Work is divided into
+cost-balanced blocks scheduled dynamically across all threads.
+
+\subsection*{Rigor by construction}
+Every intermediate quantity is an Arb ball --- an interval guaranteed
+to contain the true value --- and every truncation is folded in as an
+explicit error bound. The final decimal expansion is produced by a
+proof-carrying rounding step that prints digits only when the ball
+certifies a unique correctly rounded value. There is no estimated
+error anywhere in the pipeline; a wrong digit is impossible, and
+failure would be loud rather than silent.
+
+\section{The record computation}
+
+On August 27, 2026, the program computed $2{,}000{,}000$ digits after
+the decimal point in a single run (Table~\ref{tab:run}).
+
+\begin{table}[ht]
+\caption{Parameters of the record run.}
+\label{tab:run}
+\begin{tabular}{ll}
+\toprule
+Hardware & Intel Core Ultra 9 275HX, 24 threads, 64\,GB RAM \\
+Software & Fedora Linux 44, GCC 16.2, FLINT 3.4.0, stock GMP/MPFR \\
+Working precision & $6{,}643{,}988$ bits \\
+Wall time & 8\,h\,47\,m\,26\,s \quad (compute: $31{,}644$\,s) \\
+Average CPU utilization & 931\% of 2400\% \\
+Peak resident memory & 55.8\,GiB \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The run pressed against the machine's limits: the program's
+conservative memory preflight refuses $2 \times 10^6$ digits on a
+64\,GB machine (estimate 61.7\,GiB) and was overridden; the measured
+peak of 55.8\,GiB left under 6\,GiB of headroom. Memory, not time, is
+the binding constraint. The dominant allocation is the internal state
+of the reverse Bernoulli iterators, which grows roughly quadratically
+with the digit count; the measured local cost exponent, near
+$d^{2.0}$ at moderate sizes, steepens to about $3.2$ between one and
+two million digits as that state overwhelms the caches. A further
+doubling would require well over 128\,GB of memory together with an
+out-of-core redesign, and $10^9$ digits remains out of reach for every
+known method: the exponent, not the constant factor, is the
+obstruction.
+
+\section{Verification}
+
+Three independent legs support the result.
+\begin{enumerate}
+\item \emph{Interval certification.} The computation carries a
+rigorous enclosure end to end; the printed digits are certified
+correctly rounded by construction, not checked after the fact.
+\item \emph{An independent backend.} The program ships a second,
+structurally different backend (per-term \texttt{arb\_zeta\_ui} at
+full precision) sharing only the outer series framing
+\eqref{eq:accel}. The two agree byte for byte at every size tested.
+\item \emph{Agreement with the previous record.} The first $10^6$
+digits of the new result are identical, digit for digit, to Sim\'o's
+independent 2016 computation \cite{simo2016} --- different program,
+different algorithmic details, different hardware era --- as cached on
+OEIS entry A002210.
+\end{enumerate}
+
+\section{Availability}
+
+The C program, the two-million-digit result, the raw run telemetry,
+the mathematical background document, and reference implementations of
+the same accelerated series in seventeen further languages (each
+verified byte-identical to the C program's output) are available under
+the MIT license at
+\url{https://github.com/reza-ghazi/khinchin-fast}
+and are permanently archived at Zenodo
+\cite{zenodo}.
+
+\begin{thebibliography}{9}
+
+\bibitem{khinchin1935}
+A.~Ya. Khinchin,
+\emph{Metrische Kettenbruchprobleme},
+Compositio Math. \textbf{1} (1935), 361--382.
+See also \emph{Continued Fractions}, Dover, 1997.
+
+\bibitem{bbc1997}
+D.~H. Bailey, J.~M. Borwein, and R.~E. Crandall,
+\emph{On the Khintchine constant},
+Math. Comp. \textbf{66} (1997), no.~217, 417--431.
+
+\bibitem{gourdon}
+X.~Gourdon and P.~Sebah,
+\emph{The Khintchine constant},
+Numbers, constants and computation, 1998--2002.
+
+\bibitem{simo2016}
+C.~Sim\'o,
+\emph{Computation of $10^6$ digits of Khintchine's constant}, 2016.
+Announced via OEIS A002210;
+\url{http://www.maia.ub.es/dsg/khinchin}.
+
+\bibitem{oeis}
+OEIS Foundation Inc.,
+\emph{The On-Line Encyclopedia of Integer Sequences}, entry A002210,
+\url{https://oeis.org/A002210}.
+
+\bibitem{johansson2017}
+F.~Johansson,
+\emph{Arb: efficient arbitrary-precision midpoint-radius interval
+arithmetic},
+IEEE Trans. Comput. \textbf{66} (2017), no.~8, 1281--1292.
+FLINT: \url{https://flintlib.org}.
+
+\bibitem{bloemen2022}
+R.~Bloemen,
+\texttt{recmo/khinchin}, 2022,
+\url{https://github.com/recmo/khinchin}.
+
+\bibitem{zenodo}
+R.~Ghazi,
+\emph{khinchin-fast: Khinchin's constant to 2{,}000{,}000 certified
+decimal digits}, Zenodo, 2026,
+\url{https://doi.org/10.5281/zenodo.22134905}.
+
+\end{thebibliography}
+
+\end{document}
