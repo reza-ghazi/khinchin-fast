@@ -1,0 +1,33 @@
+{
+    "title": "khinchin-fast: Khinchin's constant to 2,000,000 certified decimal digits",
+    "upload_type": "software",
+    "description": "Rigorously certified computation of Khinchin's constant using an accelerated Bailey-Borwein-Crandall zeta series over FLINT/Arb ball arithmetic with OpenMP. Includes the 2,000,000-digit result computed on August 27, 2026 (8 h 47 m on a 24-thread desktop machine) - as far as the authors can find, the largest computation of the constant on record; its first 1,000,000 digits were verified digit-for-digit against Carles Simó's independent 2016 computation cached on OEIS A002210. The repository also carries reference implementations of the same accelerated series in seventeen further languages, all verified byte-identical to the C program's output.",
+    "creators": [
+        {
+            "name": "Ghazi, Reza"
+        }
+    ],
+    "license": "MIT",
+    "keywords": [
+        "Khinchin's constant",
+        "continued fractions",
+        "arbitrary precision",
+        "number theory",
+        "FLINT",
+        "Arb",
+        "interval arithmetic",
+        "mathematical constants"
+    ],
+    "related_identifiers": [
+        {
+            "identifier": "https://oeis.org/A002210",
+            "relation": "isSupplementTo",
+            "scheme": "url"
+        },
+        {
+            "identifier": "https://github.com/reza-ghazi/khinchin-fast",
+            "relation": "isSupplementTo",
+            "scheme": "url"
+        }
+    ]
+}
