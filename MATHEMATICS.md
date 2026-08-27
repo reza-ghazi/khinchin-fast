@@ -287,8 +287,7 @@ port-local kit (Machin pi, atanh-series logarithms, halve-and-square
 exp), taking the even zeta values from the classical positive-term
 recurrence `(n + 1/2) zeta(2n) = sum_{j=1}^{n-1} zeta(2j) zeta(2n-2j)`
 — numerically benign but `O(M^2)` full-precision products, which is
-what orders that family by bignum backend. Earlier Julia/Rust/Fortran
-versions used the same recurrence; binding FLINT bought them 15–27x.
+what orders that family by bignum backend.
 Every executable port takes `DIGITS [OUTPUT_FILE]` and writes output
 byte-identical to the C program's; `README.md` carries the measured
 cross-language speed table.
