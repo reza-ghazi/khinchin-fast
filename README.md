@@ -34,8 +34,8 @@ Benchmark calculation without converting or writing the digits:
 ./khinchin-fast --benchmark 1000000
 ```
 
-The reverse Bernoulli backend is the default. The previous independent Arb
-backend remains available for cross-checking:
+The reverse Bernoulli backend is the default. An independent Arb-based
+backend is available for cross-checking:
 
 ```sh
 KHINCHIN_BACKEND=arb ./khinchin-fast 10000 khinchin-arb-10k.txt
@@ -55,15 +55,15 @@ prints per-block ranges and timings.
 
 Intel Core Ultra 9 275HX, 24 threads, FLINT 3.4.0, August 25, 2026:
 
-| Digits after decimal | This version | + tuned libraries | Previous SCP | Earlier parallel Arb | Peak RAM |
-|---:|---:|---:|---:|---:|---:|
-| 10,000 | 0.14 s | 0.14 s | 0.34 s | 0.64 s | 37 MB |
-| 20,000 | 0.43 s | 0.43 s | 1.21 s | 3.47 s | 54 MB |
-| 30,000 | 0.98 s | 0.88 s | 2.64 s | 8.58 s | 77 MB |
-| 50,000 | 2.67 s | 2.09 s | 7.89 s | 34.61 s | 140 MB |
-| 100,000 | 12.09 s | 8.58 s | 37.40 s | not run | 342 MB |
-| 200,000 | 55.75 s | 49.2 s | 170.82 s | not run | 937 MB |
-| 1,000,000 | 3413.29 s | 3371.28 s | not run | not run | 16.1 GB |
+| Digits after decimal | Default backend | + tuned libraries | `KHINCHIN_BACKEND=arb` | Peak RAM |
+|---:|---:|---:|---:|---:|
+| 10,000 | 0.14 s | 0.14 s | 0.64 s | 37 MB |
+| 20,000 | 0.43 s | 0.43 s | 3.47 s | 54 MB |
+| 30,000 | 0.98 s | 0.88 s | 8.58 s | 77 MB |
+| 50,000 | 2.67 s | 2.09 s | 34.61 s | 140 MB |
+| 100,000 | 12.09 s | 8.58 s | not run | 342 MB |
+| 200,000 | 55.75 s | 49.2 s | not run | 937 MB |
+| 1,000,000 | 3413.29 s | 3371.28 s | not run | 16.1 GB |
 
 The "+ tuned libraries" column is the same binary preloading the
 CPU-tuned GMP/FLINT pair described in the tuned-libraries subsection
@@ -108,10 +108,8 @@ against the program's preflight estimate:
 
 The preflight models both allocations explicitly and is calibrated on the
 measurements above to stay 1.2-1.6x over the actual peak — deliberately
-conservative, since its job is to refuse jobs that would exhaust RAM. (An
-earlier version modelled only the power tables and under-estimated the
-million-digit run by more than 2x, which would have let a ~2.5M-digit job
-sail into an out-of-memory crash.) On this 64 GB machine the preflight starts
+conservative, since its job is to refuse jobs that would exhaust RAM.
+On this 64 GB machine the preflight starts
 refusing around 2 million digits, and the measured growth curve suggests such
 a job would genuinely need ~55 GB: memory, not time, is the first hard wall
 of the current all-in-memory design. Breaking past it would need out-of-core
@@ -124,10 +122,8 @@ PARI/GP (2.18.1 development, multithreaded build, 24 threads) has no built-in
 Khinchin constant, so the comparison uses a GP implementation of the same
 accelerated series: a serial version with the incremental power table, and a
 parallel version that splits the zeta range across threads with `parvector`.
-The script lives at `ports/khinchin.gp`; the `psi`-based block seeding used
-when this table was measured has since been replaced by direct summation
-(~4x faster at 10k digits — current timings are in the by-language table
-below). Wall-clock times as measured:
+The script lives at `ports/khinchin.gp` (current timings are also in
+the by-language table below). Wall-clock times:
 
 | Digits after decimal | GP serial | GP parallel (24 threads) | This program | Speedup vs GP parallel |
 |---:|---:|---:|---:|---:|
@@ -175,8 +171,8 @@ seven produce byte-identical output files on this machine.
 - `ports/khinchin.jl` — Julia driving FLINT/Arb directly through plain
   `ccall` against the system libflint (no packages): `arb_zeta_ui` per
   term, blocked across Julia threads (`julia -t auto`). Only Arb's
-  pointer-based API is used, so no C struct layouts are declared. 27x
-  faster than the previous BigFloat/recurrence version.
+  pointer-based API is used, so no C struct layouts are declared.
+  0.72 s at 10k digits.
 - `ports/khinchin.cpp` — C++17 mirroring the C program most closely of
   any port: FLINT's `bernoulli_rev` used natively (no FFI shim), the
   two-region split, and full dropping precision, over an RAII Arb
@@ -187,12 +183,14 @@ seven produce byte-identical output files on this machine.
   30-line C shim built by `build.rs`, since its struct layout is not
   expressible in Rust FFI) streams exact `B_2n` per block below
   `n_direct`, and literal tail sums cover the region above it — no
-  Bernoulli numbers there at all. rug arithmetic, rayon blocks. 15.5x
-  faster than the previous recurrence version.
+  Bernoulli numbers there at all. rug arithmetic, rayon blocks, and the
+  C program's dropping precision (a term of magnitude `N^(-2n)` only
+  needs `wp - 2n log2 N` accurate bits, so table entries start at the
+  precision of their final, most demanding use). 0.41 s at 10k digits.
 - `ports/khinchin.f90` — Fortran binding FLINT/Arb through standard
   `ISO_C_BINDING` (pointer-based API only): `arb_zeta_ui` per term,
-  OpenMP blocks, GNU MPFR for the final decimal formatting. 16.7x faster
-  than the previous MPFR/recurrence version.
+  OpenMP blocks, GNU MPFR for the final decimal formatting. 0.74 s at
+  10k digits.
 - `ports/khinchin.mpl` — Maple version of the same series, serial.
   Verified with Maple 2024.2: byte-identical output to the C program at
   1000 digits, digit-exact against the reference file at 10,000.
@@ -207,8 +205,8 @@ seven produce byte-identical output files on this machine.
   Taylor — and takes zeta(2n) from the positive-term recurrence, but
   only below `n_direct`: the whole family carries the C program's
   two-region split, evaluating the large-n terms as literal tail sums
-  with no zeta values at all, which shortens the O(M^2) recurrence and
-  measured 1.9-2.7x across the family. Go fans the convolutions out
+  with no zeta values at all, which shortens the O(M^2) recurrence to
+  O(n_direct^2). Go fans the convolutions out
   over goroutines, Java over parallel streams, and C# over
   Parallel.For; Node, Ruby, and Perl are serial. All verified byte-identical to the C output at 1000
   digits. Perl doubles as a control experiment for the arithmetic
@@ -239,18 +237,13 @@ seven produce byte-identical output files on this machine.
   `KhinchinBuiltin` for cross-checking. Byte-identical output to the C
   program at 1000 digits.
 
-Earlier versions of the Julia, Rust, and Fortran ports were
-deliberately self-contained, taking their even zeta values from the
-classical positive-term recurrence
-`(n + 1/2) zeta(2n) = sum_j zeta(2j) zeta(2n-2j)` — numerically benign,
-but `O(M^2)` full-precision products, which capped them at 9.8-19.2 s
-for 10k digits. Binding FLINT instead (history has the old versions)
-bought 15-27x and demonstrated the point the table below makes: the
+The table below makes one point measurable from three directions: the
 ranking is set by the zeta strategy and the bignum library, not by the
-host language. A second round proved two more C-program techniques
-portable: dropping precision took the Rust port from 0.63 s to 0.41 s
-at 10k digits, and giving the whole native-bignum family the two-region
-split bought a further 1.9x (Go) to 2.7x (Perl) with no other changes.
+host language. Ports that bind FLINT sit within a few multiples of the
+C program regardless of language; ports on the self-contained
+positive-term recurrence line up by the quality of their native bignum
+arithmetic; and the same source file moves entire tiers when only its
+arithmetic backend changes (see the Python and Perl rows).
 
 ### Measured speed by language
 
@@ -335,7 +328,7 @@ machine, identical output digits:
 | `arb_zeta_ui` per term at full precision | `KHINCHIN_BACKEND=arb`, Julia/Fortran ports | 0.64-0.74 s, and scaling worse (34.6 s vs 2.67 s at 50k) |
 | PARI's Bernoulli machinery | `ports/khinchin.gp` | 2.8 s |
 | Reverse Bernoulli + direct tail + dropping precision | Rust port | 0.41 s |
-| Positive-term recurrence, `O(M^2)` | earlier Julia/Rust/Fortran ports | 10-19 s |
+| Positive-term recurrence, `O(M^2)` | native-bignum family (Go ... OCaml) | 15-127 s |
 | Symbolic exact `Zeta[2n]` (Bernoulli rationals) | Mathematica port | 21.7 s |
 
 **The constant factors.** On top of the winning strategy, this program
