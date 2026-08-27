@@ -5,6 +5,13 @@ acceleration and an SCP-style reverse Bernoulli iterator implemented with
 FLINT/Arb. FLINT uses GMP for large integer arithmetic and Arb tracks a rigorous
 interval; the program writes a correctly rounded decimal expansion.
 
+On August 27, 2026 it computed **2,000,000 digits** of the constant in
+8 h 47 m on a single 24-thread desktop machine — as far as we can find,
+the largest computation of Khinchin's constant on record (the previous
+largest being 10^6 digits in ~12 single-core days, 2016). The digits are
+in `khinchin-2m.txt`, the raw telemetry in `khinchin-2m.log`, and
+`ARTICLE.md` is a self-contained write-up of the computation.
+
 The `ports/` directory carries implementations of the same accelerated
 series in seventeen more languages — FLINT-backed C++, Rust, Julia, and
 Fortran, Python (30-37x faster than mpmath's built-in), PARI/GP, Maple,
@@ -95,8 +102,9 @@ the largest computation of Khinchin's constant on record — see
 deliberately conservative preflight refuses the job on this 64 GB
 machine; measured peak was 55.8 GiB and the run fit in RAM (a standby
 swapfile went unused). Its first 1,000,000 digits are byte-identical to
-`khinchin-1m.txt`, and the full result is committed as
-`khinchin-2m.txt`.
+`khinchin-1m.txt` **and** to Carles Simó's independent 2016 computation
+(the copy cached on OEIS A002210, all 10^6 digits compared directly).
+The full result is committed as `khinchin-2m.txt`.
 
 ![time vs digits, log-log](assets/benchmark.png)
 

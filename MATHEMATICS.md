@@ -303,7 +303,7 @@ project's own):
 | 1997 | 7,350 | Bailey, Borwein, Crandall — zeta-series acceleration |
 | 1998 | 110,000 | Gourdon — refined acceleration |
 | 2016 | 1,000,000 | Carles Simó (University of Barcelona) — PARI, ~12 days, single core; announced through OEIS A002210, where a cached copy of the digits is kept with permission |
-| 2026 | 2,000,000 | This project — FLINT/Arb accelerated BBC series, 8 h 47 m wall on a 24-thread Intel Core Ultra 9 275HX, 55.8 GiB peak RAM; result in `khinchin-2m.txt`, first 10^6 digits byte-identical to the 2016 computation |
+| 2026 | 2,000,000 | This project — FLINT/Arb accelerated BBC series, 8 h 47 m wall on a 24-thread Intel Core Ultra 9 275HX, 55.8 GiB peak RAM; result in `khinchin-2m.txt`, first 10^6 digits verified digit-for-digit against the OEIS-cached copy of the 2016 computation |
 
 For perspective, this machine reproduces the 1998 record in about 15 seconds,
 the 2016 million-digit computation in 57 minutes, and doubled it to two
@@ -331,7 +331,9 @@ transliteration "Khintchine") in 2024.
 Facts recorded on the entry, cross-checked against this program:
 
 - The 104 digits in the entry's data field match `khinchin-1m.txt` digit for
-  digit (verified as part of this project's review).
+  digit, and the full 10^6-digit file cached on the entry (Simó's 2016
+  computation) matches this project's output digit for digit — both
+  verified as part of this project's review.
 - **Digit provenance**: Harry J. Smith's b-file supplies 1,200 digits; Simon
   Plouffe hosts 1,024-digit and 110,000-digit tables; and Carles Simó's 2016
   computation of 10^6 digits (reported to the OEIS in October 2016) is cached
