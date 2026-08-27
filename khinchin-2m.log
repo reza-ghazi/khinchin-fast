@@ -1,0 +1,128 @@
+nohup: ignoring input
+block 0: n in [1, 21102], 5077.903 s
+block 1: n in [21103, 40093], 6766.799 s
+block 2: n in [40094, 55951], 6695.540 s
+block 3: n in [55952, 69129], 5774.410 s
+block 4: n in [69130, 80294], 4414.227 s
+block 5: n in [80295, 89967], 4678.316 s
+block 6: n in [89968, 98509], 4995.051 s
+block 7: n in [98510, 106173], 2604.812 s
+block 8: n in [106174, 113136], 2589.291 s
+block 9: n in [113137, 119528], 2560.488 s
+block 10: n in [119529, 125447], 2397.990 s
+block 11: n in [125448, 130965], 4287.200 s
+block 12: n in [130966, 136141], 2247.978 s
+block 13: n in [136142, 141021], 2485.759 s
+block 14: n in [141022, 145641], 2234.134 s
+block 15: n in [145642, 150033], 15046.790 s
+block 16: n in [150034, 154220], 2502.428 s
+block 17: n in [154221, 158225], 13970.170 s
+block 18: n in [158226, 162066], 12223.772 s
+block 19: n in [162067, 165757], 3340.345 s
+block 20: n in [165758, 169311], 2619.066 s
+block 21: n in [169312, 172741], 3543.105 s
+block 22: n in [172742, 176057], 3470.845 s
+block 23: n in [176058, 179266], 1994.336 s
+block 24: n in [179267, 182377], 4053.401 s
+block 25: n in [182378, 185397], 2194.319 s
+block 26: n in [185398, 188333], 3309.245 s
+block 27: n in [188334, 191189], 1972.636 s
+block 28: n in [191190, 193970], 3228.127 s
+block 29: n in [193971, 196682], 9176.116 s
+block 30: n in [196683, 199328], 4433.172 s
+block 31: n in [199329, 201912], 1971.716 s
+block 32: n in [201913, 204437], 2317.292 s
+block 33: n in [204438, 206907], 1849.014 s
+block 34: n in [206908, 209325], 3792.379 s
+block 35: n in [209326, 211692], 2707.696 s
+block 36: n in [211693, 214012], 1952.121 s
+block 37: n in [214013, 216287], 3173.871 s
+block 38: n in [216288, 218519], 11777.093 s
+block 39: n in [218520, 220709], 2824.505 s
+block 40: n in [220710, 222860], 8647.578 s
+block 41: n in [222861, 224974], 3191.114 s
+block 42: n in [224975, 227051], 1858.982 s
+block 43: n in [227052, 229093], 3654.973 s
+block 44: n in [229094, 231103], 3296.424 s
+block 45: n in [231104, 233080], 3192.407 s
+block 46: n in [233081, 235027], 3285.918 s
+block 47: n in [235028, 236944], 9772.399 s
+block 48: n in [236945, 238832], 2410.657 s
+block 49: n in [238833, 240693], 2046.987 s
+block 50: n in [240694, 242528], 7809.357 s
+block 51: n in [242529, 244337], 15145.032 s
+block 52: n in [244338, 246121], 2057.514 s
+block 53: n in [246122, 247881], 7510.928 s
+block 54: n in [247882, 249618], 15044.360 s
+block 55: n in [249619, 251332], 6060.363 s
+block 56: n in [251333, 253025], 10343.043 s
+block 57: n in [253026, 254697], 10328.379 s
+block 58: n in [254698, 256348], 4611.003 s
+block 59: n in [256349, 257979], 2548.660 s
+block 60: n in [257980, 259591], 10102.155 s
+block 61: n in [259592, 261185], 7198.305 s
+block 62: n in [261186, 262760], 10532.007 s
+block 63: n in [262761, 264317], 2171.828 s
+block 64: n in [264318, 265858], 3249.236 s
+block 65: n in [265859, 267381], 5023.312 s
+block 66: n in [267382, 268888], 3443.243 s
+block 67: n in [268889, 270380], 3305.839 s
+block 68: n in [270381, 271856], 15461.563 s
+block 69: n in [271857, 273316], 2251.274 s
+block 70: n in [273317, 274762], 2391.766 s
+block 71: n in [274763, 276194], 3723.701 s
+block 72: n in [276195, 277612], 3384.259 s
+block 73: n in [277613, 279016], 1972.787 s
+block 74: n in [279017, 280407], 3332.812 s
+block 75: n in [280408, 281784], 1961.823 s
+block 76: n in [281785, 283149], 1830.387 s
+block 77: n in [283150, 284501], 4692.449 s
+block 78: n in [284502, 285842], 12187.172 s
+block 79: n in [285843, 287170], 5979.001 s
+block 80: n in [287171, 288487], 10235.119 s
+block 81: n in [288488, 289792], 3214.413 s
+block 82: n in [289793, 291086], 2756.931 s
+block 83: n in [291087, 292369], 7015.008 s
+block 84: n in [292370, 293642], 9870.885 s
+block 85: n in [293643, 294904], 3760.117 s
+block 86: n in [294905, 296155], 1851.077 s
+block 87: n in [296156, 297397], 3384.174 s
+block 88: n in [297398, 298629], 5207.283 s
+block 89: n in [298630, 299851], 11410.483 s
+block 90: n in [299852, 301063], 2193.899 s
+block 91: n in [301064, 302266], 3560.111 s
+block 92: n in [302267, 303460], 3071.913 s
+block 93: n in [303461, 310639], 2582.962 s
+block 94: n in [310640, 327154], 2379.648 s
+block 95: n in [327155, 418876], 21478.154 s
+digits_after_decimal=2000000
+working_precision_bits=6643988
+backend=scp
+threads=24
+estimated_peak_memory_mib=63163.51
+compute_seconds=31644.281867
+conversion_and_write_seconds=0.243100
+total_seconds=31644.524967
+	Command being timed: "./khinchin-fast --force 2000000 khinchin-2m.txt"
+	User time (seconds): 292756.47
+	System time (seconds): 2111.79
+	Percent of CPU this job got: 931%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 8:47:26
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 58516672
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 8
+	Minor (reclaiming a frame) page faults: 255031028
+	Voluntary context switches: 260639965
+	Involuntary context switches: 2788862
+	Swaps: 0
+	File system inputs: 5712
+	File system outputs: 3992
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
