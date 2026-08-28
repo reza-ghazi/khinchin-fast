@@ -17,3 +17,4 @@ paper/*.out
 paper/*.toc
 paper/khinchin-2m.log
 paper/khinchin-2m.pdf
+claude_resume_command.txt
