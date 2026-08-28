@@ -4,7 +4,7 @@ title: "khinchin-fast"
 type: software
 authors:
   - family-names: "Ghazi"
-    given-names: "Reza"
+    given-names: "Reza K"
 abstract: >-
   Rigorously certified computation of Khinchin's constant to millions of
   decimal digits using an accelerated Bailey-Borwein-Crandall zeta

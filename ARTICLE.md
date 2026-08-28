@@ -1,6 +1,6 @@
 # Two Million Digits of Khinchin's Constant
 
-**Reza Ghazi** · August 27, 2026
+**Reza K Ghazi** · August 27, 2026
 
 *A record computation of Khinchin's constant to 2,000,000 decimal
 digits — rigorously certified, independently cross-checked, and
@@ -189,6 +189,6 @@ described in section 5.
   1281–1292; FLINT, <https://flintlib.org>.
 - R. Bloemen, `recmo/khinchin`, 2022,
   <https://github.com/recmo/khinchin>.
-- R. Ghazi, *khinchin-fast: Khinchin's constant to 2,000,000 certified
+- R. K Ghazi, *khinchin-fast: Khinchin's constant to 2,000,000 certified
   decimal digits*, Zenodo, 2026,
   [doi:10.5281/zenodo.22134905](https://doi.org/10.5281/zenodo.22134905).
