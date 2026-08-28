@@ -165,6 +165,13 @@ program's output. A single `make check` rebuilds and re-verifies the
 whole set. The repository is permanently archived at Zenodo:
 [doi:10.5281/zenodo.22134905](https://doi.org/10.5281/zenodo.22134905).
 
+## Acknowledgments
+
+The software and this write-up were developed with the assistance of
+Claude (Anthropic), used as a programming and drafting tool under the
+author's direction; all results are independently verifiable as
+described in section 5.
+
 ## References
 
 - A. Ya. Khinchin, *Metrische Kettenbruchprobleme*, Compositio
