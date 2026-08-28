@@ -108,7 +108,10 @@ machine; measured peak was 55.8 GiB and the run fit in RAM (a standby
 swapfile went unused). Its first 1,000,000 digits are byte-identical to
 `khinchin-1m.txt` **and** to Carles Simó's independent 2016 computation
 (the copy cached on OEIS A002210, all 10^6 digits compared directly).
-The full result is committed as `khinchin-2m.txt`.
+The full result is committed as `khinchin-2m.txt`, with
+`khinchin-2m-grouped.txt` carrying the same digits in the line-grouped,
+position-annotated format of Simó's published file (the two agree
+byte-for-byte over their first million digits).
 
 ![time vs digits, log-log](assets/benchmark.png)
 
