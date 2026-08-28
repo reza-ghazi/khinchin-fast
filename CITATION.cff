@@ -3,8 +3,8 @@ message: "If you use this software, please cite it as below."
 title: "khinchin-fast"
 type: software
 authors:
-  - family-names: "Ghazi"
-    given-names: "Reza K"
+  - family-names: "K Ghazi"
+    given-names: "Reza"
 abstract: >-
   Rigorously certified computation of Khinchin's constant to millions of
   decimal digits using an accelerated Bailey-Borwein-Crandall zeta
