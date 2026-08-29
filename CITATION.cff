@@ -5,6 +5,7 @@ type: software
 authors:
   - family-names: "K Ghazi"
     given-names: "Reza"
+    orcid: "https://orcid.org/0009-0009-3286-4675"
 abstract: >-
   Rigorously certified computation of Khinchin's constant to millions of
   decimal digits using an accelerated Bailey-Borwein-Crandall zeta
