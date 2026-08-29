@@ -1,6 +1,6 @@
 # Two Million Digits of Khinchin's Constant
 
-**Reza K Ghazi** · August 27, 2026
+**Reza K Ghazi** ([ORCID 0009-0009-3286-4675](https://orcid.org/0009-0009-3286-4675)) · August 27, 2026
 
 *A record computation of Khinchin's constant to 2,000,000 decimal
 digits — rigorously certified, independently cross-checked, and
