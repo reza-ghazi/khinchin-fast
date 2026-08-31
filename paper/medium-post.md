@@ -4,10 +4,12 @@ write-up and is unchanged; this file exists only because Medium's editor
 has no tables and no math rendering.
 
 HOW TO USE
-  1. https://medium.com/p/import — paste the artifact URL
-     (https://claude.ai/code/artifact/0f693a14-820c-4c23-9864-a7e896ca8a82).
+  1. https://medium.com/p/import — paste
+     https://reza-ghazi.github.io/khinchin-fast/
      This is what sets rel=canonical back to the original; a plain paste
-     cannot. Let the import finish even though the draft will be messy.
+     cannot. Do NOT use the claude.ai artifact URL: it serves only a
+     wrapper to outside fetchers, so the import fails. Let the import
+     finish even though the draft will be messy.
   2. Delete the imported body, then paste this file's body over it.
      The canonical link stays attached to the draft.
   3. Handle the two [IMAGE] markers below (screenshot from the artifact

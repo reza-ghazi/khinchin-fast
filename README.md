@@ -12,7 +12,9 @@ On August 27, 2026 it computed **2,000,000 digits** of the constant in
 the largest computation of Khinchin's constant on record (the previous
 largest being 10^6 digits in ~12 single-core days, 2016). The digits are
 in `khinchin-2m.txt`, the raw telemetry in `khinchin-2m.log`, and
-`ARTICLE.md` is a self-contained write-up of the computation
+`ARTICLE.md` is a self-contained write-up of the computation, also
+readable as a web page at
+<https://reza-ghazi.github.io/khinchin-fast/>
 (`paper/khinchin-2m.tex` is the same write-up as an arXiv-ready LaTeX
 preprint). The computation is listed in the links of
 [OEIS A002210](https://oeis.org/A002210), the entry for the constant,
