@@ -66,9 +66,12 @@ That is a sum over infinitely many algebraically independent transcendentals `ze
 
 That quadratic wall is why the record history is so short — five entries in seventy years:
 
-<!-- [IMAGE] Screenshot the records table from the artifact page and insert
-     it here. Medium has no tables. If you would rather not use an image,
-     delete this comment and keep the list below; otherwise delete the list. -->
+<!-- [IMAGE] Upload paper/medium-assets/records-table.png here (drag it into
+     the Medium editor, or click the + and choose the image). Medium has no
+     tables, so this is the table as a picture. Caption suggestion:
+     "Seventy years of record computations. Each 10x in digits costs ~100x
+     in time." If you prefer text, delete this comment and keep the list
+     below; otherwise delete the list once the image is in. -->
 
 - **1959–1960s** — Shanks, Wrench and others: tens of digits
 - **1997** — Bailey, Borwein, Crandall: 7,350 digits, via the accelerated zeta series

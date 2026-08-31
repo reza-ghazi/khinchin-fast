@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="512" viewBox="0 0 1200 512" font-family="Liberation Serif, DejaVu Serif, Georgia, serif">
+  <rect width="1200" height="512" fill="#F4F5F2"/>
+  <rect x="0" y="0" width="1200" height="6" fill="#8C2F39"/>
+
+  <text x="60" y="78" font-size="34" font-weight="600" fill="#182230">Record computations of Khinchin&#8217;s constant</text>
+
+  <text x="60"  y="132" font-size="17" letter-spacing="1.6" fill="#46505E">YEAR</text>
+  <text x="560" y="132" font-size="17" letter-spacing="1.6" fill="#46505E" text-anchor="end">DIGITS</text>
+  <text x="620" y="132" font-size="17" letter-spacing="1.6" fill="#46505E">AUTHOR &#183; METHOD</text>
+  <line x1="60" y1="152" x2="1140" y2="152" stroke="#182230" stroke-width="1.6"/>
+
+  <text x="60"  y="200" font-size="23" fill="#182230">1959&#8211;1960s</text>
+  <text x="560" y="200" font-size="23" fill="#182230" text-anchor="end" font-family="Liberation Mono, DejaVu Sans Mono, monospace">tens</text>
+  <text x="620" y="200" font-size="23" fill="#182230">Shanks, Wrench and others</text>
+  <line x1="60" y1="222" x2="1140" y2="222" stroke="#C9CCC4" stroke-width="1"/>
+
+  <text x="60"  y="266" font-size="23" fill="#182230">1997</text>
+  <text x="560" y="266" font-size="23" fill="#182230" text-anchor="end" font-family="Liberation Mono, DejaVu Sans Mono, monospace">7,350</text>
+  <text x="620" y="266" font-size="23" fill="#182230">Bailey, Borwein, Crandall &#8212; zeta-series acceleration</text>
+  <line x1="60" y1="288" x2="1140" y2="288" stroke="#C9CCC4" stroke-width="1"/>
+
+  <text x="60"  y="332" font-size="23" fill="#182230">1998</text>
+  <text x="560" y="332" font-size="23" fill="#182230" text-anchor="end" font-family="Liberation Mono, DejaVu Sans Mono, monospace">110,000</text>
+  <text x="620" y="332" font-size="23" fill="#182230">Gourdon &#8212; refined acceleration</text>
+  <line x1="60" y1="354" x2="1140" y2="354" stroke="#C9CCC4" stroke-width="1"/>
+
+  <text x="60"  y="398" font-size="23" fill="#182230">2016</text>
+  <text x="560" y="398" font-size="23" fill="#182230" text-anchor="end" font-family="Liberation Mono, DejaVu Sans Mono, monospace">1,000,000</text>
+  <text x="620" y="398" font-size="23" fill="#182230">Sim&#243; &#8212; PARI, ~12 days, single core</text>
+
+  <rect x="44" y="418" width="1112" height="62" fill="#ECEEE9"/>
+  <rect x="44" y="418" width="5" height="62" fill="#8C2F39"/>
+  <text x="60"  y="458" font-size="23" font-weight="600" fill="#8C2F39">2026</text>
+  <text x="560" y="458" font-size="23" font-weight="600" fill="#8C2F39" text-anchor="end" font-family="Liberation Mono, DejaVu Sans Mono, monospace">2,000,000</text>
+  <text x="620" y="458" font-size="23" font-weight="600" fill="#8C2F39">this work &#8212; 8 h 47 m, one desktop machine</text>
+</svg>
