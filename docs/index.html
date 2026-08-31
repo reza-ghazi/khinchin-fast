@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Reza K Ghazi">
+<meta name="description" content="A record computation of Khinchin's constant to 2,000,000 decimal digits — rigorously certified in FLINT/Arb ball arithmetic, cross-checked against the previous record, and completed in 8 h 47 m on a single desktop machine.">
+<link rel="canonical" href="https://reza-ghazi.github.io/khinchin-fast/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Two Million Digits of Khinchin's Constant">
+<meta property="og:description" content="A record computation of Khinchin's constant to 2,000,000 decimal digits — rigorously certified in FLINT/Arb ball arithmetic, cross-checked against the previous record, and completed in 8 h 47 m on a single desktop machine.">
+<meta property="og:url" content="https://reza-ghazi.github.io/khinchin-fast/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Two Million Digits of Khinchin's Constant">
+<meta name="twitter:description" content="A record computation of Khinchin's constant to 2,000,000 decimal digits — rigorously certified in FLINT/Arb ball arithmetic, cross-checked against the previous record, and completed in 8 h 47 m on a single desktop machine.">
+<style>:root{color-scheme:light dark}img{max-width:100%}</style>
+<title>Two Million Digits of Khinchin's Constant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #F4F5F2;
+    --ink: #182230;
+    --ink-soft: #46505E;
+    --accent: #8C2F39;
+    --slate: #41608A;
+    --rule: #C9CCC4;
+    --ribbon: #B9BDB4;
+    --panel: #ECEEE9;
+    --panel-edge: #D8DAD2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #141922;
+      --ink: #E4E2D8;
+      --ink-soft: #A6ACB6;
+      --accent: #D4757D;
+      --slate: #8FA9CB;
+      --rule: #333C49;
+      --ribbon: #3A4452;
+      --panel: #1B222D;
+      --panel-edge: #2B3441;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #141922;
+    --ink: #E4E2D8;
+    --ink-soft: #A6ACB6;
+    --accent: #D4757D;
+    --slate: #8FA9CB;
+    --rule: #333C49;
+    --ribbon: #3A4452;
+    --panel: #1B222D;
+    --panel-edge: #2B3441;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Newsreader", Georgia, "Times New Roman", serif;
+    font-optical-sizing: auto;
+    font-size: 1.1rem;
+    line-height: 1.62;
+  }
+  .sheet { max-width: 46rem; margin: 0 auto; padding: 0 1.4rem 5rem; }
+
+  /* ---- masthead ---- */
+  header { padding-top: 3.2rem; }
+  .digit-ribbon {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    line-height: 1.55;
+    letter-spacing: 0.06em;
+    color: var(--ribbon);
+    word-break: break-all;
+    max-height: 4.7rem;
+    overflow: hidden;
+    user-select: none;
+  }
+  .digit-ribbon b { color: var(--accent); font-weight: 600; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.74rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--slate);
+    margin: 2.2rem 0 0.9rem;
+  }
+  h1 {
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    font-weight: 600;
+    line-height: 1.08;
+    margin: 0 0 1.1rem;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  .byline {
+    font-size: 1rem;
+    color: var(--ink-soft);
+    margin-bottom: 2rem;
+  }
+  .byline strong { color: var(--ink); font-weight: 600; }
+  .abstract {
+    font-size: 1.13rem;
+    font-style: italic;
+    line-height: 1.55;
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--rule);
+    padding: 1.3rem 0;
+    margin: 0 0 1rem;
+  }
+  .abstract a { font-style: normal; }
+
+  /* ---- sections ---- */
+  h2 {
+    font-size: 1.55rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 3rem 0 0.9rem;
+    text-wrap: balance;
+  }
+  h2 .no {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+  p { margin: 0 0 1.05rem; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 0.16em; }
+  a:hover { text-decoration-thickness: 2px; }
+  a:focus-visible { outline: 2px solid var(--slate); outline-offset: 2px; }
+  em { font-style: italic; }
+  strong { font-weight: 600; }
+
+  /* ---- math + code ---- */
+  .math {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.86rem;
+    line-height: 1.7;
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-left: 3px solid var(--accent);
+    padding: 0.9rem 1.1rem;
+    margin: 1.2rem 0 1.3rem;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.86em;
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 3px;
+    padding: 0.08em 0.32em;
+  }
+
+  /* ---- tables ---- */
+  .tablewrap { overflow-x: auto; margin: 1.3rem 0 1.5rem; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.98rem;
+    line-height: 1.45;
+  }
+  th {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--slate);
+    text-align: left;
+    border-bottom: 2px solid var(--ink);
+    padding: 0.4rem 1rem 0.4rem 0;
+  }
+  td {
+    border-bottom: 1px solid var(--rule);
+    padding: 0.5rem 1rem 0.5rem 0;
+    vertical-align: top;
+  }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.num { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.88rem; }
+  tr.record td { color: var(--accent); font-weight: 600; border-bottom-color: var(--accent); }
+
+  /* ---- run facts ---- */
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 1px;
+    background: var(--panel-edge);
+    border: 1px solid var(--panel-edge);
+    margin: 1.3rem 0 1.5rem;
+  }
+  .fact { background: var(--panel); padding: 0.85rem 1rem; }
+  .fact .k {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--slate);
+    margin-bottom: 0.3rem;
+  }
+  .fact .v { font-size: 1.06rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .fact .v small { font-size: 0.85rem; color: var(--ink-soft); font-weight: 400; }
+
+  ol.verify { padding-left: 1.3rem; margin: 0 0 1.05rem; }
+  ol.verify li { margin-bottom: 0.75rem; padding-left: 0.3rem; }
+  ol.verify li::marker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  ul.refs { list-style: none; padding: 0; margin: 0; }
+  ul.refs li {
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.97rem;
+  }
+
+  footer {
+    margin-top: 3.5rem;
+    border-top: 2px solid var(--ink);
+    padding-top: 1rem;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  footer .k0 { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<div class="sheet">
+<header>
+  <div class="digit-ribbon" aria-hidden="true"><b>2.68545200106530644530</b>97148354817956938203822939944629530511523455572188595371520028011411749318476979951534659052880900828976777164109630517925334832596683818523154213321194996260393285220448194096180686641664289308477880620360737053501033672633577289049904270702723451702625237023545810686318501032374655803775026442524852869468234189949157306618987207994137235500057935736698933950879021244642075289741459147693018449050601793499385225470404203377985639831015709022233910000220772509651332460444439191691460859682348212832462282927101269069741823484776754573489862542033926623518620867781366509696583146995271837448054012195366666049648269</div>
+  <div class="eyebrow">A computational record · August 27, 2026</div>
+  <h1>Two Million Digits of Khinchin's Constant</h1>
+  <div class="byline">by <strong>Reza K Ghazi</strong> &middot; <a href="https://orcid.org/0009-0009-3286-4675">ORCID 0009-0009-3286-4675</a></div>
+  <p class="abstract">A record computation of Khinchin's constant to 2,000,000 decimal digits — rigorously certified, independently cross-checked, and completed in under nine hours on a single desktop machine. Code, digits, and raw telemetry: <a href="https://github.com/reza-ghazi/khinchin-fast">github.com/reza-ghazi/khinchin-fast</a> · archived at <a href="https://doi.org/10.5281/zenodo.22134905">doi:10.5281/zenodo.22134905</a>.</p>
+</header>
+
+<h2><span class="no">§ 1</span>The constant</h2>
+<p>Write a real number <code>x</code> as a simple continued fraction:</p>
+<div class="math">x = a0 + 1/(a1 + 1/(a2 + 1/(a3 + ...)))</div>
+<p>In 1935 Aleksandr Khinchin proved something remarkable: for almost every real number — all but a set of Lebesgue measure zero — the geometric mean of the partial quotients <code>a1, a2, a3, …</code> converges to one universal constant, independent of the number chosen:</p>
+<div class="math">lim (a1 · a2 · … · an)^(1/n)  =  K0  =  2.68545200106530644530…
+n→∞</div>
+<p>The constant has a closed product form,</p>
+<div class="math">K0 = ∏ ( 1 + 1/(k(k+2)) )^(log2 k),   k = 1, 2, 3, …</div>
+<p>and is entry <a href="https://oeis.org/A002210">A002210</a> in the OEIS. It sits at the center of the metric theory of continued fractions, yet almost nothing is known about it as a number: it is not known whether <code>K0</code> is irrational, let alone transcendental — and, in a pleasant irony, it is not known whether <code>K0</code>'s own continued fraction obeys Khinchin's theorem (numerically, it appears to).</p>
+
+<h2><span class="no">§ 2</span>Why the digits are hard</h2>
+<p>For constants like <code>π</code>, hypergeometric series with rational terms admit binary splitting, giving quasi-linear algorithms — which is why <code>π</code> is known to hundreds of trillions of digits. No such series is known for <code>K0</code>. Every practical method goes through the even zeta values: taking logarithms of the product and expanding gives the Bailey–Borwein–Crandall series</p>
+<div class="math">ln(2) · ln(K0) = Σ_{n≥1} (ζ(2n) − 1)/n · h(n),
+      h(n) = Σ_{j=1}^{2n−1} (−1)^(j+1) / j,</div>
+<p>a sum over infinitely many algebraically independent transcendentals <code>ζ(2), ζ(4), …</code>, each needed essentially to full precision. Nobody has found a way around that, and every known algorithm costs on the order of <code>d²</code> (up to logarithmic factors) for <code>d</code> digits: each 10× in digits costs ~100× in time. That quadratic wall is why the record history is so short:</p>
+<div class="tablewrap"><table>
+  <tr><th class="num">Year</th><th class="num">Digits</th><th>Who / method</th></tr>
+  <tr><td class="num">1959–60s</td><td class="num">tens</td><td>Shanks, Wrench and others</td></tr>
+  <tr><td class="num">1997</td><td class="num">7,350</td><td>Bailey, Borwein, Crandall — accelerated zeta series</td></tr>
+  <tr><td class="num">1998</td><td class="num">110,000</td><td>Gourdon — refined acceleration</td></tr>
+  <tr><td class="num">2016</td><td class="num">1,000,000</td><td>Simó — PARI, ~12 days, single core</td></tr>
+  <tr class="record"><td class="num">2026</td><td class="num">2,000,000</td><td>this computation — 8 h 47 m, one desktop machine</td></tr>
+</table></div>
+
+<h2><span class="no">§ 3</span>The algorithm</h2>
+<p>The program (<code>khinchin_fast.c</code>, a single C file on FLINT/Arb ball arithmetic with OpenMP) evaluates the accelerated form of the BBC series: for a cut-off <code>N</code>,</p>
+<div class="math">ln(2) · ln(K0) = − Σ_{k=2}^{N−1} ln((k−1)/k) · ln((k+1)/k)
+                 + Σ_{n≥1} ( ζ(2n) − 1 − Σ_{k=2}^{N−1} k^(−2n) ) / n · h(n),</div>
+<p>whose <code>n</code>-th term now shrinks like <code>N^(−2n)</code>, so about <code>P / (2 log2 N)</code> terms suffice for <code>P</code> bits. Three further ideas carry most of the speed:</p>
+<p><strong>Dropping precision.</strong> A term of magnitude <code>N^(−2n)</code> contributes at most <code>P − 2n·log2 N</code> bits to the final sum, so almost all arithmetic runs far below full precision. The shared power tables drop precision per entry the same way.</p>
+<p><strong>A two-region split.</strong> For <code>n</code> above <code>~P/(2(log2 N + 3))</code> the term <code>ζ(2n) − 1 − Σ k^(−2n)</code> is computed as the literal tail sum <code>Σ_{k≥N} k^(−2n)</code> at low precision — no Bernoulli numbers at all. Below the split, where <code>ζ(2n)</code> is genuinely near 1 and needs full precision, FLINT's reverse Bernoulli iterator (<code>bernoulli_rev</code>) reconstructs it. Work is split into cost-balanced blocks scheduled dynamically across all threads.</p>
+<p><strong>Rigor by construction.</strong> All arithmetic is Arb ball arithmetic: every intermediate is an interval guaranteed to contain the true value, every truncation is folded in as an explicit error bound, and the final decimal is produced by a proof-carrying rounding step that only prints digits when the ball certifies a unique correctly rounded value. There is no "estimated error" anywhere — a wrong digit is impossible; failure would be loud, not silent.</p>
+<p>The zeta-acceleration structure is adapted from Remco Bloemen's MIT-licensed <a href="https://github.com/recmo/khinchin">recmo/khinchin</a>; the repository's <code>MATHEMATICS.md</code> gives the full derivation and history.</p>
+
+<h2><span class="no">§ 4</span>The record run</h2>
+<p>On August 27, 2026, the program computed 2,000,000 digits after the decimal point in one run:</p>
+<div class="facts">
+  <div class="fact"><div class="k">Hardware</div><div class="v">Intel Core Ultra 9 275HX <small>· 24 threads · 64 GB RAM</small></div></div>
+  <div class="fact"><div class="k">Software</div><div class="v">Fedora 44, GCC 16.2 <small>· FLINT 3.4.0, stock GMP/MPFR</small></div></div>
+  <div class="fact"><div class="k">Working precision</div><div class="v">6,643,988 bits</div></div>
+  <div class="fact"><div class="k">Wall time</div><div class="v">8 h 47 m 26 s <small>· compute 31,644 s</small></div></div>
+  <div class="fact"><div class="k">Average CPU</div><div class="v">931% <small>· memory-bandwidth-bound</small></div></div>
+  <div class="fact"><div class="k">Peak memory</div><div class="v">55.8 GiB <small>resident</small></div></div>
+</div>
+<p>The run pushed the machine to its edge: the program's own conservative memory preflight refuses 2,000,000 digits on a 64 GB machine (estimate: 61.7 GiB) and had to be overridden with <code>--force</code>; measured peak was 55.8 GiB, within 6 GiB of physical RAM, and a standby swapfile went unused. Memory, not time, is the binding constraint — the dominant allocation is the internal state of the reverse Bernoulli iterators, which grows roughly quadratically with the digit count. The local cost exponent, <code>~d^2.0</code> at small sizes, steepens to <code>~3.2</code> between one and two million digits as that state overwhelms the caches. The next doubling would need well over 128 GB of RAM and an out-of-core redesign, and a billion digits remains out of reach for everyone: the exponent, not the constant factor, is the obstruction.</p>
+
+<h2><span class="no">§ 5</span>Verification</h2>
+<p>Three independent legs support the result:</p>
+<ol class="verify">
+  <li><strong>Interval certification.</strong> The computation carries a rigorous enclosure end to end; the printed digits are certified correctly rounded by construction, not checked after the fact.</li>
+  <li><strong>An independent backend.</strong> The program ships a second, structurally different backend (per-term <code>arb_zeta_ui</code> at full precision) sharing only the outer series framing. The two agree byte-for-byte at every size tested.</li>
+  <li><strong>Agreement with the previous record.</strong> The first 1,000,000 digits of the new result are identical, digit for digit, to Carles Simó's independent 2016 computation (different program, different algorithm details, different CPU era), as cached on OEIS A002210.</li>
+</ol>
+
+<h2><span class="no">§ 6</span>Availability</h2>
+<p>Everything is in the repository <a href="https://github.com/reza-ghazi/khinchin-fast">github.com/reza-ghazi/khinchin-fast</a> (MIT license): the C program, the 2,000,000-digit result (<code>khinchin-2m.txt</code>), the raw run telemetry (<code>khinchin-2m.log</code>), the mathematical background document, and — as a byproduct of validating the algorithm — reference implementations of the same accelerated series in seventeen further languages, from FLINT-backed C++/Rust/Julia/Fortran to pure-bignum Go/Java/Haskell/OCaml, every one verified byte-identical to the C program's output. A single <code>make check</code> rebuilds and re-verifies the whole set. The repository is permanently archived at Zenodo: <a href="https://doi.org/10.5281/zenodo.22134905">doi:10.5281/zenodo.22134905</a>. Since August 31, 2026 the computation is also listed in the links of the constant's OEIS entry, <a href="https://oeis.org/A002210">A002210</a>.</p>
+
+<h2><span class="no">§ A</span>Acknowledgments</h2>
+<p>The software and this write-up were developed with the assistance of Claude (Anthropic), used as a programming and drafting tool under the author's direction; all results are independently verifiable as described in § 5.</p>
+
+<h2><span class="no">§ R</span>References</h2>
+<ul class="refs">
+  <li>A. Ya. Khinchin, <em>Metrische Kettenbruchprobleme</em>, Compositio Mathematica 1 (1935), 361–382; <em>Continued Fractions</em>, Dover reprint 1997.</li>
+  <li>D. H. Bailey, J. M. Borwein, R. E. Crandall, <em>On the Khintchine constant</em>, Mathematics of Computation 66 (1997), 417–431.</li>
+  <li>X. Gourdon, P. Sebah, <em>The Khintchine constant</em> (Numbers, constants and computation), 1998–2002.</li>
+  <li>C. Simó, <em>Computation of 10⁶ digits of Khintchine's constant</em>, 2016, announced via OEIS A002210.</li>
+  <li>OEIS Foundation, entry <a href="https://oeis.org/A002210">A002210</a>.</li>
+  <li>F. Johansson, <em>Arb: efficient arbitrary-precision midpoint-radius interval arithmetic</em>, IEEE Transactions on Computers 66 (2017), 1281–1292; FLINT, <a href="https://flintlib.org">flintlib.org</a>.</li>
+  <li>R. Bloemen, <a href="https://github.com/recmo/khinchin">recmo/khinchin</a>, 2022.</li>
+  <li>R. K Ghazi, <em>khinchin-fast: Khinchin's constant to 2,000,000 certified decimal digits</em>, Zenodo, 2026, <a href="https://doi.org/10.5281/zenodo.22134905">doi:10.5281/zenodo.22134905</a>.</li>
+</ul>
+
+<footer>
+  <span class="k0">K0 = 2.685452001065306445…</span>
+  <span>2,000,000 certified digits · doi:10.5281/zenodo.22134905</span>
+</footer>
+</div>
+</body>
+</html>
