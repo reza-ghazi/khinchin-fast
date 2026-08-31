@@ -15,6 +15,8 @@ in `khinchin-2m.txt`, the raw telemetry in `khinchin-2m.log`, and
 `ARTICLE.md` is a self-contained write-up of the computation, also
 readable as a web page at
 <https://reza-ghazi.github.io/khinchin-fast/>
+and republished on
+[Medium](https://medium.com/@itprofessional/two-million-digits-of-khinchins-constant-8daeaa587a5e)
 (`paper/khinchin-2m.tex` is the same write-up as an arXiv-ready LaTeX
 preprint). The computation is listed in the links of
 [OEIS A002210](https://oeis.org/A002210), the entry for the constant,

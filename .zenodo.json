@@ -29,6 +29,16 @@
             "identifier": "https://github.com/reza-ghazi/khinchin-fast",
             "relation": "isSupplementTo",
             "scheme": "url"
+        },
+        {
+            "identifier": "https://reza-ghazi.github.io/khinchin-fast/",
+            "relation": "isDocumentedBy",
+            "scheme": "url"
+        },
+        {
+            "identifier": "https://medium.com/@itprofessional/two-million-digits-of-khinchins-constant-8daeaa587a5e",
+            "relation": "isDocumentedBy",
+            "scheme": "url"
         }
     ]
 }

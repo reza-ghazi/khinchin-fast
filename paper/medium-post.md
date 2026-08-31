@@ -1,21 +1,36 @@
 <!--
-Medium-ready rendition of ARTICLE.md. ARTICLE.md remains the canonical
-write-up and is unchanged; this file exists only because Medium's editor
-has no tables and no math rendering.
+Medium rendition of ARTICLE.md. ARTICLE.md remains the canonical
+write-up and is unchanged; this file exists because Medium's editor has
+no tables and no math rendering.
 
-HOW TO USE
-  1. https://medium.com/p/import — paste
-     https://reza-ghazi.github.io/khinchin-fast/
-     This is what sets rel=canonical back to the original; a plain paste
-     cannot. Do NOT use the claude.ai artifact URL: it serves only a
-     wrapper to outside fetchers, so the import fails. Let the import
-     finish even though the draft will be messy.
-  2. Delete the imported body, then paste this file's body over it.
-     The canonical link stays attached to the draft.
-  3. Handle the two [IMAGE] markers below (screenshot from the artifact
-     page), then delete every HTML comment and marker line.
-  4. Type ``` on an empty line in Medium to open a code block; paste the
-     fenced content in, without the backticks.
+PUBLISHED 2026-08-31:
+  https://medium.com/@itprofessional/two-million-digits-of-khinchins-constant-8daeaa587a5e
+Imported from https://reza-ghazi.github.io/khinchin-fast/, so the story
+carries "Originally published at ..." and the canonical link points
+home. Keep it that way: editing a published story is fine, but deleting
+and re-posting loses the canonical.
+
+The published story cannot be fetched by tools (Cloudflare 403s both
+curl and WebFetch). To read its current content, use the RSS feed:
+  curl -sL https://medium.com/feed/@itprofessional
+whose <content:encoded> holds the full article HTML.
+
+WHAT MEDIUM'S IMPORTER DOES TO A PAGE — learned the hard way, worth
+knowing before syndicating anywhere else:
+  - Styled divs are dropped silently. The records table and the
+    run-parameters block both vanished; the table went back in as
+    medium-assets/records-table.png, the parameters as a bullet list.
+  - Hyperlinks inside prose can be stripped (the OEIS link was).
+  - Em dashes degrade to hyphens in some paragraphs, not others.
+  - Multi-line formulas flatten onto one line; re-split them by hand
+    inside a code block (``` on an empty line).
+  - Pasted Markdown stays literal. Medium converts syntax only as you
+    type it, so `##` and `**bold**` arrive as characters. Retype
+    headings and use Ctrl+B / Ctrl+I instead.
+  - Smart typography turns digit-hyphen-digit into an en dash, which
+    corrupts an ORCID iD. Inline code (Ctrl+Shift+K) suppresses it.
+  - A claude.ai artifact URL cannot be imported at all: it serves only
+    a wrapper to outside fetchers. Import from the Pages URL.
 -->
 
 # Two Million Digits of Khinchin's Constant

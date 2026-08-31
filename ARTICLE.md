@@ -167,6 +167,10 @@ whole set. The repository is permanently archived at Zenodo:
 and the computation is listed in the links of the constant's OEIS entry,
 [A002210](https://oeis.org/A002210), as of August 31, 2026.
 
+This article is published at
+<https://reza-ghazi.github.io/khinchin-fast/>, which is its canonical
+home, and republished on [Medium](https://medium.com/@itprofessional/two-million-digits-of-khinchins-constant-8daeaa587a5e).
+
 ## Acknowledgments
 
 The software and this write-up were developed with the assistance of
