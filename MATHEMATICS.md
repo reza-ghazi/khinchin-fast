@@ -339,6 +339,9 @@ Facts recorded on the entry, cross-checked against this program:
   computation of 10^6 digits (reported to the OEIS in October 2016) is cached
   on the entry with permission — the computation this program reproduces in
   under an hour (and has since doubled; see the records table above).
+  Since August 31, 2026 the entry's links also carry this project's
+  2,000,000-digit computation ("Reza K Ghazi, *khinchin-fast: Khinchin's
+  constant to 2000000 decimal digits*, GitHub, 2026").
 - **Formulas**: the defining product `prod_{k>=1} (1 + 1/(k(k+2)))^(log2 k)`,
   and `K0 = exp(A247038 / log 2)`, where **A247038** is the decimal expansion
   of `Integral_{x=0..1} ln(floor(1/x)) / (1+x) dx = 0.6847247885631571...`.

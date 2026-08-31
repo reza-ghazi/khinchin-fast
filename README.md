@@ -14,7 +14,10 @@ largest being 10^6 digits in ~12 single-core days, 2016). The digits are
 in `khinchin-2m.txt`, the raw telemetry in `khinchin-2m.log`, and
 `ARTICLE.md` is a self-contained write-up of the computation
 (`paper/khinchin-2m.tex` is the same write-up as an arXiv-ready LaTeX
-preprint).
+preprint). The computation is listed in the links of
+[OEIS A002210](https://oeis.org/A002210), the entry for the constant,
+and permanently archived at
+[doi:10.5281/zenodo.22134905](https://doi.org/10.5281/zenodo.22134905).
 
 The `ports/` directory carries implementations of the same accelerated
 series in seventeen more languages — FLINT-backed C++, Rust, Julia, and

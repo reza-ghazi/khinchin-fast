@@ -163,7 +163,9 @@ languages, from FLINT-backed C++/Rust/Julia/Fortran to pure-bignum
 Go/Java/Haskell/OCaml, every one verified byte-identical to the C
 program's output. A single `make check` rebuilds and re-verifies the
 whole set. The repository is permanently archived at Zenodo:
-[doi:10.5281/zenodo.22134905](https://doi.org/10.5281/zenodo.22134905).
+[doi:10.5281/zenodo.22134905](https://doi.org/10.5281/zenodo.22134905),
+and the computation is listed in the links of the constant's OEIS entry,
+[A002210](https://oeis.org/A002210), as of August 31, 2026.
 
 ## Acknowledgments
 
